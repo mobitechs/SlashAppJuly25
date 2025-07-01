@@ -1,0 +1,18 @@
+<resources>
+    <string name="app_name">Slash</string>
+    <string name="welcome_title">Welcome!</string>
+    <string name="phone_verification_subtitle">Enter your phone number, we will send you OTP to verify</string>
+    <string name="phone_number_label">Phone Number</string>
+    <string name="phone_number_placeholder">9854145237</string>
+    <string name="get_otp">Get OTP</string>
+    <string name="otp_verification_title">Phone Number Verification</string>
+    <string name="otp_subtitle">Enter 6 digits OTP (One Time Password) that sent to %s</string>
+    <string name="enter_otp">Enter OTP</string>
+    <string name="verify">Verify</string>
+    <string name="resend_otp">Resend OTP</string>
+    <string name="resend_otp_timer">Resend OTP in %ds</string>
+    <string name="invalid_phone">Please enter a valid Phone Number.</string>
+    <string name="invalid_otp">Invalid OTP</string>
+    <string name="otp_incomplete">Please enter complete OTP</string>
+    <string name="back">Back</string>
+</resources>
