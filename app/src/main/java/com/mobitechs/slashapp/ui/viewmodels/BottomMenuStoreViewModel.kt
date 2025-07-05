@@ -1,4 +1,6 @@
 package com.mobitechs.slashapp.ui.viewmodels
 
-class BottomMenuStoreViewModel {
+class BottomMenuStoreViewModel  : BaseViewModel()  {
+
+
 }

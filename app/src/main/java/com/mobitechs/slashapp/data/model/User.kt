@@ -3,24 +3,24 @@ package com.mobitechs.slashapp.data.model
 
 
 data class User(
-    val id: String = "",
-    val firstName: String = "",
-    val lastName: String = "",
-    val phoneNumber: String = "",
-    val email: String = "",
-    val isProfileComplete: Boolean = false,
-    val isEmailVerified: Boolean = false,
-    val referralCode: String = "",
-    val profilePicture: String = ""
+    val email: String?,
+    val first_name: String?,
+    val id: Int,
+    val last_name: String?,
+    val phone_number: String,
+    var profile_completion_percentage: Int?,
+    val referral_code: String?,
+    val wallet: Wallet?
+)
+
+
+data class Wallet(
+    val available_cashback: String,
+    val total_earned: String
 )
 
 
 
-sealed class AuthResult {
-    object Loading : AuthResult()
-    data class Success(val user: User?) : AuthResult()
-    data class Error(val message: String) : AuthResult()
-}
 
 data class ApiResponse(
     val status_code: Int,

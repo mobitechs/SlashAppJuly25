@@ -2,10 +2,10 @@ package com.mobitechs.slashapp.data.api
 
 import okhttp3.CertificatePinner
 import okhttp3.OkHttpClient
-import retrofit2.Retrofit
-import retrofit2.converter.gson.GsonConverterFactory
 import java.util.concurrent.TimeUnit
 import  com.mobitechs.slashapp.utils.Constants
+import retrofit2.Retrofit
+import retrofit2.converter.gson.GsonConverterFactory
 
 
 object RetrofitClient {

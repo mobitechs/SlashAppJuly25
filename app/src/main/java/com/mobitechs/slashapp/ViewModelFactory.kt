@@ -6,6 +6,8 @@ import androidx.lifecycle.ViewModelProvider
 import com.mobitechs.slashapp.data.repository.AuthRepository
 import com.mobitechs.slashapp.ui.viewmodels.AuthOtpVerificationViewModel
 import com.mobitechs.slashapp.ui.viewmodels.AuthPhoneViewModel
+import com.mobitechs.slashapp.ui.viewmodels.AuthRegisterViewModel
+import com.mobitechs.slashapp.ui.viewmodels.HomeViewModel
 import com.mobitechs.slashapp.ui.viewmodels.SplashViewModel
 
 
@@ -29,6 +31,12 @@ class ViewModelFactory(
 
             modelClass.isAssignableFrom(AuthOtpVerificationViewModel::class.java) -> {
                 AuthOtpVerificationViewModel(authRepository) as T
+            }
+            modelClass.isAssignableFrom(AuthRegisterViewModel::class.java) -> {
+                AuthRegisterViewModel(authRepository) as T
+            }
+            modelClass.isAssignableFrom(HomeViewModel::class.java) -> {
+                HomeViewModel() as T
             }
 
 

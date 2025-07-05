@@ -16,6 +16,7 @@ import androidx.navigation.compose.rememberNavController
 import com.mobitechs.slashapp.ui.screens.AppBottomNavigation
 import com.mobitechs.slashapp.ui.screens.AuthOtpVerificationScreen
 import com.mobitechs.slashapp.ui.screens.AuthPhoneScreen
+import com.mobitechs.slashapp.ui.screens.AuthRegisterScreen
 import com.mobitechs.slashapp.ui.screens.BottomMenuRewardScreen
 import com.mobitechs.slashapp.ui.screens.BottomMenuScanScreen
 import com.mobitechs.slashapp.ui.screens.BottomMenuStoreScreen
@@ -25,6 +26,7 @@ import com.mobitechs.slashapp.ui.screens.SplashScreen
 import com.mobitechs.slashapp.ui.theme.SlashTheme
 import com.mobitechs.slashapp.ui.viewmodels.AuthOtpVerificationViewModel
 import com.mobitechs.slashapp.ui.viewmodels.AuthPhoneViewModel
+import com.mobitechs.slashapp.ui.viewmodels.AuthRegisterViewModel
 import com.mobitechs.slashapp.ui.viewmodels.BottomMenuRewardViewModel
 import com.mobitechs.slashapp.ui.viewmodels.BottomMenuScanViewModel
 import com.mobitechs.slashapp.ui.viewmodels.BottomMenuStoreViewModel
@@ -93,13 +95,13 @@ fun AppNavigation(viewModelFactory: ViewModelFactory) {
     ) { paddingValues ->
         NavHost(
             navController = navController,
-            startDestination = Screen.SplashScreen.route,
+            startDestination = Screen.SplashScreen.route, //AuthRegisterScreen
             modifier = Modifier.padding(paddingValues)
         ) {
             composable(Screen.SplashScreen.route) {
-                val splashViewModel: SplashViewModel = viewModel(factory = viewModelFactory)
+                val viewModel: SplashViewModel = viewModel(factory = viewModelFactory)
                 SplashScreen(
-                    viewModel = splashViewModel,
+                    viewModel = viewModel,
                     onNavigateToHome = {
                         navController.navigate(Screen.HomeScreen.route) {
                             popUpTo(Screen.SplashScreen.route) { inclusive = true }
@@ -114,29 +116,32 @@ fun AppNavigation(viewModelFactory: ViewModelFactory) {
             }
 
             composable(Screen.AuthPhoneScreen.route) {
-                val authViewModel: AuthPhoneViewModel = viewModel(factory = viewModelFactory)
+                val viewModel: AuthPhoneViewModel = viewModel(factory = viewModelFactory)
                 AuthPhoneScreen(
-                    viewModel = authViewModel,
-                    onNavigateToOtp = { phoneNumber ->
-                        navController.navigate(Screen.AuthOtpVerificationScreen.route+"/$phoneNumber")
-                    }
+                    viewModel = viewModel,
+                    navController = navController
+//                    onNavigateToOtp = { phoneNumber ->
+//                        navController.navigate(Screen.AuthOtpVerificationScreen.route+"/$phoneNumber")
+//                    }
                 )
             }
 
 
-            composable(Screen.AuthOtpVerificationScreen.route+"/{phoneNumber}") { backStackEntry ->
+            composable(Screen.AuthOtpVerificationScreen.route+"/{phoneNumber}/{otp}/{otpExpiry}") { backStackEntry ->
                 val phoneNumber = backStackEntry.arguments?.getString("phoneNumber") ?: ""
-                val authViewModel: AuthOtpVerificationViewModel = viewModel(factory = viewModelFactory)
+                val otp = backStackEntry.arguments?.getString("otp") ?: ""
+                val otpExpiry = backStackEntry.arguments?.getString("otpExpiry") ?: ""
+
+                val viewModel: AuthOtpVerificationViewModel = viewModel(factory = viewModelFactory)
                 AuthOtpVerificationScreen(
-                    viewModel = authViewModel,
+                    viewModel = viewModel,
                     phoneNumber = phoneNumber,
+                    otp = otp,
+                    otpExpiry = otpExpiry,
+                    navController = navController,
                     onBackClick = {
                         navController.popBackStack()
                     },
-                    onVerificationSuccess = {
-                        // Navigate to next screen (signup or home)
-                        // navController.navigate("signup")
-                    }
                 )
             }
 
@@ -144,42 +149,54 @@ fun AppNavigation(viewModelFactory: ViewModelFactory) {
 
 
             // Main screens
+            composable(Screen.AuthRegisterScreen.route) {
+                val viewModel: AuthRegisterViewModel = viewModel(factory = viewModelFactory)
+                AuthRegisterScreen(
+                    viewModel = viewModel,
+                    navController = navController,
+                    onBackClick = {
+                        navController.popBackStack()
+                    }
+                )
+            }
+
+            // Main screens
             composable(Screen.HomeScreen.route) {
-                val homeViewModel: HomeViewModel = viewModel(factory = viewModelFactory)
+                val viewModel: HomeViewModel = viewModel(factory = viewModelFactory)
                 HomeScreen(
-                    viewModel = homeViewModel,
+                    viewModel = viewModel,
                     navController = navController
                 )
             }
 
             composable(Screen.BottomMenuTransactionScreen.route) {
-                val homeViewModel: BottomMenuTransactionViewModel = viewModel(factory = viewModelFactory)
+                val viewModel: BottomMenuTransactionViewModel = viewModel(factory = viewModelFactory)
                 BottomMenuTransactionScreen(
-                    viewModel = homeViewModel,
+                    viewModel = viewModel,
                     navController = navController
                 )
             }
 
             composable(Screen.BottomMenuScanScreen.route) {
-                val homeViewModel: BottomMenuScanViewModel = viewModel(factory = viewModelFactory)
+                val viewModel: BottomMenuScanViewModel = viewModel(factory = viewModelFactory)
                 BottomMenuScanScreen(
-                    viewModel = homeViewModel,
+                    viewModel = viewModel,
                     navController = navController
                 )
             }
 
             composable(Screen.BottomMenuRewardScreen.route) {
-                val homeViewModel: BottomMenuRewardViewModel = viewModel(factory = viewModelFactory)
+                val viewModel: BottomMenuRewardViewModel = viewModel(factory = viewModelFactory)
                 BottomMenuRewardScreen(
-                    viewModel = homeViewModel,
+                    viewModel = viewModel,
                     navController = navController
                 )
             }
 
             composable(Screen.BottomMenuStoreScreen.route) {
-                val homeViewModel: BottomMenuStoreViewModel = viewModel(factory = viewModelFactory)
+                val viewModel: BottomMenuStoreViewModel = viewModel(factory = viewModelFactory)
                 BottomMenuStoreScreen(
-                    viewModel = homeViewModel,
+                    viewModel = viewModel,
                     navController = navController
                 )
             }
@@ -198,6 +215,7 @@ sealed class Screen(val route: String) {
     object SplashScreen : Screen("splashScreen")
     object AuthPhoneScreen : Screen("AuthPhoneScreen")
     object AuthOtpVerificationScreen : Screen("AuthOtpVerificationScreen")
+    object AuthRegisterScreen : Screen("AuthRegisterScreen")
     object HomeScreen : Screen("HomeScreen")
     object BottomMenuTransactionScreen : Screen("BottomMenuTransactionScreen")
     object BottomMenuScanScreen : Screen("BottomMenuScanScreen")

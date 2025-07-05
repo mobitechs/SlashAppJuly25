@@ -8,7 +8,9 @@ import kotlinx.coroutines.launch
 
 // UI State for phone input screen
 data class AuthPhoneUiState(
-    val phoneNumber: String = "",
+    val phoneNumber: String = "8655883062",
+    val otp: String = "123456",
+    val otpExpiry: String = "",
     val phoneError: String = "",
     val isValidPhone: Boolean = false,
     val hasError: Boolean = false,
@@ -56,11 +58,14 @@ class AuthPhoneViewModel(
             try {
                 val response = authRepository.sendOtp(phoneNumber)
 
-                if (response.status_code == 200) {
+                if (response.success == true) {
                     _uiState.update {
                         it.copy(
                             isLoading = false,
-                            navigateToOtp = true
+                            navigateToOtp = true,
+                            otp = response.data.otp,
+                            otpExpiry = response.data.expires_in
+
                         )
                     }
                 } else {
@@ -101,74 +106,3 @@ class AuthPhoneViewModel(
         return phone.length >= 10 && phone.all { it.isDigit() }
     }
 }
-
-//class PhoneInputViewModel : ViewModel() {
-//
-//    private val authRepository = AuthRepository()
-//
-//    private val _uiState = MutableStateFlow(PhoneInputUiState())
-//    val uiState: StateFlow<PhoneInputUiState> = _uiState.asStateFlow()
-//
-//    fun onPhoneNumberChange(phoneNumber: String) {
-//        val filtered = phoneNumber.filter { it.isDigit() }
-//        if (filtered.length <= 10) {
-//            val isValid = PhoneValidator.isValidPhone(filtered)
-//
-//            _uiState.value = _uiState.value.copy(
-//                phoneNumber = filtered,
-//                phoneError = "", // Clear error on input change
-//                isValidPhone = isValid,
-//                hasError = false // Reset error state
-//            )
-//        }
-//    }
-//
-//    fun sendOtp() {
-//        val currentState = _uiState.value
-//
-//        if (!PhoneValidator.isValidPhone(currentState.phoneNumber)) {
-//            _uiState.value = currentState.copy(
-//                phoneError = "Please enter a valid Phone Number.",
-//                hasError = true // Set error state
-//            )
-//            return
-//        }
-//
-//        viewModelScope.launch {
-//            authRepository.sendOtp("+91${currentState.phoneNumber}")
-//                .collect { result ->
-//                    when (result) {
-//                        is AuthResult.Loading -> {
-//                            _uiState.value = currentState.copy(isLoading = true)
-//                        }
-//                        is AuthResult.Success -> {
-//                            _uiState.value = currentState.copy(
-//                                isLoading = false,
-//                                navigateToOtp = true
-//                            )
-//                        }
-//                        is AuthResult.Error -> {
-//                            _uiState.value = currentState.copy(
-//                                isLoading = false,
-//                                phoneError = result.message,
-//                                hasError = true
-//                            )
-//                        }
-//                    }
-//                }
-//        }
-//    }
-//
-//    fun onNavigateToOtp() {
-//        _uiState.value = _uiState.value.copy(navigateToOtp = false)
-//    }
-//}
-//
-//data class PhoneInputUiState(
-//    val phoneNumber: String = "",
-//    val phoneError: String = "",
-//    val isValidPhone: Boolean = false,
-//    val hasError: Boolean = false, // Added to track error state explicitly
-//    val isLoading: Boolean = false,
-//    val navigateToOtp: Boolean = false
-//)

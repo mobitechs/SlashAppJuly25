@@ -13,16 +13,19 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavController
+import com.mobitechs.slashapp.Screen
 import com.mobitechs.slashapp.ui.viewmodels.AuthOtpVerificationViewModel
 import com.mobitechs.slashapp.ui.components.*
 import com.mobitechs.slashapp.ui.theme.SlashColors
-import com.mobitechs.slashapp.utils.PhoneValidator
 
 @Composable
 fun AuthOtpVerificationScreen(
     phoneNumber: String,
+    otp: String,
+    otpExpiry: String,
+    navController: NavController,
     onBackClick: () -> Unit,
-    onVerificationSuccess: () -> Unit,
     viewModel: AuthOtpVerificationViewModel = viewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -36,8 +39,14 @@ fun AuthOtpVerificationScreen(
     // Handle navigation
     LaunchedEffect(uiState.navigateToNext) {
         if (uiState.navigateToNext) {
-            onVerificationSuccess()
-            viewModel.onNavigateToNext()
+//            onVerificationSuccess()
+//            viewModel.onNavigateToNext()
+
+            if(uiState.is_new_user){
+                navController.navigate(Screen.AuthRegisterScreen.route)
+            }else{
+                navController.navigate(Screen.HomeScreen.route)
+            }
         }
     }
 
@@ -138,7 +147,7 @@ fun AuthOtpVerificationScreen(
 
                     // Subtitle
                     Text(
-                        text = "Enter 6 digits OTP (One Time Password) that sent to ${PhoneValidator.formatPhoneNumber(phoneNumber)}",
+                        text = "Enter 6 digits OTP (One Time Password) that sent to ${phoneNumber}. ($otp) Expires in $otpExpiry ",
                         fontSize = 16.sp,
                         color = SlashColors.TextSecondary,
                         lineHeight = 22.sp,
@@ -186,7 +195,7 @@ fun AuthOtpVerificationScreen(
                         modifier = Modifier.fillMaxWidth()
                     )
 
-                    Spacer(modifier = Modifier.height(24.dp))
+                    Spacer(modifier = Modifier.height(15.dp))
 
                     // Resend OTP
                     Row(
@@ -204,7 +213,7 @@ fun AuthOtpVerificationScreen(
                         )
                     }
 
-                    Spacer(modifier = Modifier.height(120.dp))  // Bottom margin for button
+                    Spacer(modifier = Modifier.height(40.dp))  // Bottom margin for button
                 }
             }
         }

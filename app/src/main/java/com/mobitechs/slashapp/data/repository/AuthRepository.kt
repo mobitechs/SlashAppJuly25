@@ -19,8 +19,8 @@ class AuthRepository(
         return user?.id.toString()
     }
 
-    suspend fun sendOtp(phoneNumber: String): ApiResponse = withContext(Dispatchers.IO) {
-        val request = SendOtpRequest(phone = phoneNumber)
+    suspend fun sendOtp(phoneNumber: String): SendOTPResponse = withContext(Dispatchers.IO) {
+        val request = SendOtpRequest(phone_number = phoneNumber)
         val response = apiService.sendOtp(request)
 
         if (response.isSuccessful) {
@@ -31,18 +31,47 @@ class AuthRepository(
         }
     }
 
-    suspend fun verifyOtp(phoneNumber: String, otp: String): ApiResponse = withContext(Dispatchers.IO) {
-        val request = VerifyOtpRequest(phone = phoneNumber, otp = otp)
+    suspend fun verifyOtp(request: VerifyOtpRequest): OTPVerifyResponse = withContext(Dispatchers.IO) {
         val response = apiService.verifyOtp(request)
 
         if (response.isSuccessful) {
             val apiResponse = response.body() ?: throw Exception("Empty response body")
+
+            if (apiResponse.success == true &&
+                apiResponse.data != null &&
+                !apiResponse.data.is_new_user &&
+                apiResponse.data.token != null &&
+                apiResponse.data.user != null) {
+                saveAuthData(apiResponse.data.token, apiResponse.data.user)
+            }
 
             return@withContext apiResponse
         } else {
             throw Exception("Verify OTP failed: ${response.message()}")
         }
     }
+
+    suspend fun register(request: RegisterUserRequest): OTPVerifyResponse = withContext(Dispatchers.IO) {
+        val response = apiService.register(request)
+
+        if (response.isSuccessful) {
+            val apiResponse = response.body() ?: throw Exception("Empty response body")
+
+            // Save auth data if registration successful
+            if (apiResponse.success == true &&
+                apiResponse.data != null &&
+                apiResponse.data.token != null &&
+                apiResponse.data.user != null) {
+                saveAuthData(apiResponse.data.token, apiResponse.data.user)
+            }
+
+            return@withContext apiResponse
+        } else {
+            throw Exception("Verify OTP failed: ${response.message()}")
+        }
+    }
+
+
 
     fun saveAuthData(token: String, user: User) {
         sharedPrefsManager.saveAuthToken(token)
@@ -60,4 +89,6 @@ class AuthRepository(
     fun logout() {
         sharedPrefsManager.logout()
     }
+
+
 }
