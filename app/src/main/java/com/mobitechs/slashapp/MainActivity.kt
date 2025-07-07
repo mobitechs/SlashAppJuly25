@@ -34,13 +34,16 @@ import com.mobitechs.slashapp.ui.viewmodels.BottomMenuTransactionViewModel
 import com.mobitechs.slashapp.ui.viewmodels.HomeViewModel
 import com.mobitechs.slashapp.ui.viewmodels.SplashViewModel
 import kotlin.collections.contains
-
+import androidx.activity.enableEdgeToEdge
+import androidx.compose.foundation.layout.WindowInsets
 
 class MainActivity : ComponentActivity() {
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        enableEdgeToEdge()
 
         // Get repositories from application class
         val app = application as SlashApp
@@ -91,7 +94,9 @@ fun AppNavigation(viewModelFactory: ViewModelFactory) {
                     }
                 )
             }
-        }
+        },
+        contentWindowInsets = WindowInsets(0, 0, 0, 0)
+
     ) { paddingValues ->
         NavHost(
             navController = navController,

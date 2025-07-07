@@ -138,4 +138,7 @@ dependencies {
 
     // WorkManager
     implementation("androidx.work:work-runtime-ktx:2.10.1")
+
+    // For status bar color control
+    implementation("com.google.accompanist:accompanist-systemuicontroller:0.32.0")
 }

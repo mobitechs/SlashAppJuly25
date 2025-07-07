@@ -7,6 +7,10 @@ import com.mobitechs.slashapp.data.repository.AuthRepository
 import com.mobitechs.slashapp.ui.viewmodels.AuthOtpVerificationViewModel
 import com.mobitechs.slashapp.ui.viewmodels.AuthPhoneViewModel
 import com.mobitechs.slashapp.ui.viewmodels.AuthRegisterViewModel
+import com.mobitechs.slashapp.ui.viewmodels.BottomMenuRewardViewModel
+import com.mobitechs.slashapp.ui.viewmodels.BottomMenuScanViewModel
+import com.mobitechs.slashapp.ui.viewmodels.BottomMenuStoreViewModel
+import com.mobitechs.slashapp.ui.viewmodels.BottomMenuTransactionViewModel
 import com.mobitechs.slashapp.ui.viewmodels.HomeViewModel
 import com.mobitechs.slashapp.ui.viewmodels.SplashViewModel
 
@@ -37,6 +41,22 @@ class ViewModelFactory(
             }
             modelClass.isAssignableFrom(HomeViewModel::class.java) -> {
                 HomeViewModel() as T
+            }
+
+            modelClass.isAssignableFrom(BottomMenuTransactionViewModel::class.java) -> {
+                BottomMenuTransactionViewModel() as T
+            }
+
+            modelClass.isAssignableFrom(BottomMenuScanViewModel::class.java) -> {
+                BottomMenuScanViewModel() as T
+            }
+
+            modelClass.isAssignableFrom(BottomMenuRewardViewModel::class.java) -> {
+                BottomMenuRewardViewModel() as T
+            }
+
+            modelClass.isAssignableFrom( BottomMenuStoreViewModel::class.java) -> {
+                BottomMenuStoreViewModel() as T
             }
 
 

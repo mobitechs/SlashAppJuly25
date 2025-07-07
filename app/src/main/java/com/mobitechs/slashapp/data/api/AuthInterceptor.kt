@@ -1,8 +1,11 @@
 package com.mobitechs.slashapp.data.api
 
+import com.android.billingclient.BuildConfig
 import com.mobitechs.slashapp.data.local.SharedPrefsManager
 import okhttp3.Interceptor
+import okhttp3.Request
 import okhttp3.Response
+import java.util.UUID
 
 
 class AuthInterceptor(
@@ -28,4 +31,6 @@ class AuthInterceptor(
 
         return chain.proceed(newRequest)
     }
+
+
 }

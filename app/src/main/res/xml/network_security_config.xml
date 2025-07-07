@@ -4,4 +4,15 @@
         <domain includeSubdomains="true">localhost</domain>
         <domain includeSubdomains="true">192.168.31.252</domain>
     </domain-config>
+
+
+<!--// uncomment it in production -->
+<!--    <domain-config cleartextTrafficPermitted="false">-->
+<!--        <domain includeSubdomains="true">your-api-domain.com</domain>-->
+<!--        <pin-set expiration="2025-12-31">-->
+<!--            <pin digest="SHA-256">your-certificate-pin</pin>-->
+<!--            <pin digest="SHA-256">backup-certificate-pin</pin>-->
+<!--        </pin-set>-->
+<!--    </domain-config>-->
+<!--    <base-config cleartextTrafficPermitted="false" />-->
 </network-security-config>
