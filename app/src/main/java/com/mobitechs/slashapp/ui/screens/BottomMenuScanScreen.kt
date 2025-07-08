@@ -49,7 +49,6 @@ fun BottomMenuScanScreen(
         viewModel.simulateQRDetection("1") // This will auto-trigger with store ID 123
     }
 
-
     // Handle navigation to transaction screen
     LaunchedEffect(uiState.navigateToTransaction) {
         if (uiState.navigateToTransaction && uiState.storeDetails != null) {

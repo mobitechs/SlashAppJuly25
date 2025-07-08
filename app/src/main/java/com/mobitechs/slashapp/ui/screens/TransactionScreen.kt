@@ -1,7 +1,9 @@
 package com.mobitechs.slashapp.ui.screens
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -16,22 +18,19 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Check
-import androidx.compose.material.icons.filled.ExpandMore
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.Checkbox
-import androidx.compose.material3.CheckboxDefaults
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Divider
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -39,16 +38,24 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.PathEffect
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
+import com.mobitechs.slashapp.R
 import com.mobitechs.slashapp.Screen
 import com.mobitechs.slashapp.data.model.StoreListItem
+import com.mobitechs.slashapp.ui.components.SlashButton
+import com.mobitechs.slashapp.ui.components.SlashTopAppBar
 import com.mobitechs.slashapp.ui.theme.SlashColors
 import com.mobitechs.slashapp.ui.viewmodels.TransactionViewModel
+import com.mobitechs.slashapp.utils.formatDecimalString
 
 // 9. Updated TransactionScreen with navigation handling
 @OptIn(ExperimentalMaterial3Api::class)
@@ -83,47 +90,31 @@ fun TransactionScreen(
             .background(Color(0xFFF5F5F5))
     ) {
         // Top Bar
-        Row(
-            modifier = Modifier
+        SlashTopAppBar(
+            onBackClick = onBackClick, title = "Scan & Pay", modifier = Modifier
                 .fillMaxWidth()
                 .background(SlashColors.Primary)
                 .statusBarsPadding()
-                .padding(16.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            IconButton(onClick = onBackClick) {
-                Icon(
-                    imageVector = Icons.Default.ArrowBack,
-                    contentDescription = "Back",
-                    tint = Color.White,
-                    modifier = Modifier.size(24.dp)
-                )
-            }
+                .padding(16.dp)
+        )
 
-            Text(
-                text = "Scan & Pay",
-                color = Color.White,
-                fontSize = 20.sp,
-                fontWeight = FontWeight.Medium,
-                modifier = Modifier.padding(start = 8.dp)
-            )
-        }
-
-        // Store Details Card
-        uiState.storeDetails?.let { storeWithCategory ->
-            StoreDetailsCard(
-                store = storeWithCategory,
-                modifier = Modifier.padding(16.dp)
-            )
-        }
 
         // Transaction Form
         LazyColumn(
             modifier = Modifier
-                .weight(1f)
-                .padding(horizontal = 16.dp),
+                .weight(1f),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
+            item {
+                // Store Details Card - Updated with background image and bags
+                uiState.storeDetails?.let { storeWithCategory ->
+                    StoreDetailsCard(
+                        store = storeWithCategory,
+                    )
+                }
+                Spacer(modifier = Modifier.height(30.dp))
+            }
+
             item {
                 BillAmountSection(
                     amount = uiState.billAmount,
@@ -135,8 +126,9 @@ fun TransactionScreen(
             item {
                 CashbackSection(
                     availableCashback = uiState.availableCashback,
-                    selectedCashback = uiState.selectedCashback,
-                    onCashbackChange = viewModel::onCashbackChange
+                    enteredCashback = uiState.enteredCashback,
+                    onCashbackChange = viewModel::onCashbackChange,
+                    billAmount = uiState.billAmount.toDoubleOrNull() ?: 0.0
                 )
             }
 
@@ -145,6 +137,7 @@ fun TransactionScreen(
                     couponCode = uiState.couponCode,
                     onCouponChange = viewModel::onCouponChange,
                     onApplyCoupon = viewModel::applyCoupon,
+                    onRemoveCoupon = viewModel::removeCoupon,
                     isApplied = uiState.isCouponApplied,
                     error = uiState.couponError
                 )
@@ -152,24 +145,31 @@ fun TransactionScreen(
 
             item {
                 BillingSummarySection(
+                    storeName = uiState.storeDetails?.name ?: "ABC Grocery Store",
                     billAmount = uiState.billAmount.toDoubleOrNull() ?: 0.0,
                     vendorDiscount = uiState.vendorDiscount,
-                    cashbackUsed = uiState.selectedCashback,
+                    cashbackUsed = uiState.enteredCashback,
                     couponDiscount = uiState.couponDiscount,
                     tax = uiState.tax,
-                    grandTotal = uiState.grandTotal
+                    grandTotal = uiState.grandTotal,
+                    isVendorDiscountApplicable = uiState.isVendorDiscountApplicable,
+                    minimumOrderAmount = uiState.storeDetails?.minimum_order_amount?.toDoubleOrNull() ?: 0.0
                 )
+                Spacer(modifier = Modifier.height(30.dp))
             }
+
         }
 
-        // Pay Button
-        PayButton(
-            amount = uiState.grandTotal,
-            enabled = uiState.isPayButtonEnabled,
-            isLoading = uiState.isLoading,
+        SlashButton(
+            text = "PAY ₹${String.format("%.2f", uiState.grandTotal)}",
             onClick = viewModel::processPayment,
-            modifier = Modifier.padding(16.dp)
+            isLoading = uiState.isLoading,
+            enabled = uiState.isPayButtonEnabled,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(bottom = 32.dp, start = 16.dp, end = 16.dp)
         )
+        Spacer(modifier = Modifier.height(30.dp))
     }
 
     // Error handling
@@ -180,54 +180,110 @@ fun TransactionScreen(
     }
 }
 
-
 @Composable
 private fun StoreDetailsCard(
     store: StoreListItem,
     modifier: Modifier = Modifier
 ) {
-    Card(
-        modifier = modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = Color(0xFFFF6B35)),
-        shape = RoundedCornerShape(12.dp),
-        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(SlashColors.OrangeBg)
     ) {
+        // Background Image
+//        Image(
+//            painter = painterResource(id = R.drawable.discount_bg),
+//            contentDescription = null,
+//            modifier = Modifier.fillMaxWidth(),
+//            contentScale = ContentScale.FillWidth
+//        )
+
+
+        // Content
         Column(
-            modifier = Modifier.padding(16.dp)
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(top = 10.dp, start = 24.dp, end = 24.dp)
         ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
+                verticalAlignment = Alignment.Top // Changed from CenterVertically to Top
             ) {
-                Text(
-                    text = "VENDOR DISCOUNT",
-                    color = Color.White,
-                    fontSize = 12.sp,
-                    fontWeight = FontWeight.Medium
-                )
+                Card(
+                    colors = CardDefaults.cardColors(containerColor = Color(0xFFFFFFFF)),
+                    shape = RoundedCornerShape(
+                        topStart = 16.dp,
+                        topEnd = 16.dp,
+                        bottomStart = 0.dp,
+                        bottomEnd = 0.dp
+                    ),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+                    modifier = Modifier.width(200.dp) // Add fixed width to control card width
+                ) {
+                    Column(modifier = Modifier.padding(10.dp)) {
+                        Text(
+                            text = "VENDOR DISCOUNT",
+                            color = SlashColors.TextPrimary,
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Medium
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
 
-                Text(
-                    text = "${store.normal_discount_percentage}%",
-                    color = Color.White,
-                    fontSize = 24.sp,
-                    fontWeight = FontWeight.Bold
+                        Box(
+                            modifier = Modifier
+                                .width(200.dp) // Match the card width
+                                .height(1.dp)
+                                .drawBehind {
+                                    val pathEffect =
+                                        PathEffect.dashPathEffect(floatArrayOf(10f, 10f), 0f)
+                                    drawLine(
+                                        color = SlashColors.DottedLineColor,
+                                        start = Offset(0f, 0f),
+                                        end = Offset(size.width, 0f),
+                                        pathEffect = pathEffect,
+                                        strokeWidth = 2.dp.toPx()
+                                    )
+                                }
+                        )
+
+                        Spacer(modifier = Modifier.height(8.dp))
+
+                        Text(
+                            text = "Total Vendor Discount: ${formatDecimalString(store.normal_discount_percentage)}%",
+                            color = SlashColors.TextPrimary,
+                            fontSize = 14.sp,
+                            fontWeight = FontWeight.Medium
+                        )
+                        Text(
+                            text = "Minimum Amount: ${store.minimum_order_amount}",
+                            color = SlashColors.TextPrimary,
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Normal
+                        )
+                        Text(
+                            text = "Vendor Name: ${store.name}",
+                            color = SlashColors.TextPrimary,
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Normal
+                        )
+                    }
+                }
+
+                // Bags Image
+                Image(
+                    painter = painterResource(id = R.drawable.bags),
+                    contentDescription = null,
+                    modifier = Modifier.size(120.dp)
                 )
             }
 
-            Spacer(modifier = Modifier.height(8.dp))
 
-            Text(
-                text = "Vendor Name: ${store.name}",
-                color = Color.White,
-                fontSize = 14.sp,
-                fontWeight = FontWeight.Medium
-            )
         }
     }
 }
 
-// 5. Transaction Form Components
+// 5. Transaction Form Components - No card, just divider
 @Composable
 private fun BillAmountSection(
     amount: String,
@@ -235,140 +291,116 @@ private fun BillAmountSection(
     error: String,
     modifier: Modifier = Modifier
 ) {
-    Card(
-        modifier = modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = Color.White),
-        shape = RoundedCornerShape(12.dp),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+    Column(
+        modifier = modifier.fillMaxWidth()
+            .padding(horizontal = 16.dp)
     ) {
-        Column(
-            modifier = Modifier.padding(16.dp)
-        ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = "Bill Amount",
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.Medium,
-                    color = SlashColors.TextPrimary
-                )
+        Text(
+            text = "Bill Amount",
+            fontSize = 16.sp,
+            fontWeight = FontWeight.Medium,
+            color = SlashColors.TextPrimary,
+            modifier = Modifier.padding(bottom = 8.dp)
+        )
 
-                Icon(
-                    imageVector = Icons.Default.ExpandMore,
-                    contentDescription = null,
-                    tint = SlashColors.TextSecondary
-                )
-            }
-
-            Spacer(modifier = Modifier.height(12.dp))
-
-            OutlinedTextField(
-                value = amount,
-                onValueChange = { newValue ->
-                    // Filter to only allow numbers and decimal point
-                    val filtered = newValue.filter { it.isDigit() || it == '.' }
-                    onAmountChange(filtered)
-                },
-                label = { Text("Your total Bill Amount") },
-                placeholder = { Text("₹0.00") },
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                modifier = Modifier.fillMaxWidth(),
-                isError = error.isNotEmpty(),
-                singleLine = true
+        OutlinedTextField(
+            value = amount,
+            onValueChange = { newValue ->
+                // Filter to only allow numbers and decimal point
+                val filtered = newValue.filter { it.isDigit() || it == '.' }
+                onAmountChange(filtered)
+            },
+            placeholder = { Text("Your total Bill Amount") },
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+            modifier = Modifier.fillMaxWidth(),
+            isError = error.isNotEmpty(),
+            singleLine = true,
+            colors = OutlinedTextFieldDefaults.colors(
+                focusedBorderColor = SlashColors.Primary,
+                unfocusedBorderColor = Color.Gray.copy(alpha = 0.5f)
             )
+//            colors = TextFieldDefaults.outlinedTextFieldColors(
+//                focusedBorderColor = SlashColors.Primary,
+//                unfocusedBorderColor = Color.Gray.copy(alpha = 0.5f)
+//            )
+        )
 
-            if (error.isNotEmpty()) {
-                Text(
-                    text = error,
-                    color = MaterialTheme.colorScheme.error,
-                    fontSize = 12.sp,
-                    modifier = Modifier.padding(top = 4.dp)
-                )
-            }
+        if (error.isNotEmpty()) {
+            Text(
+                text = error,
+                color = MaterialTheme.colorScheme.error,
+                fontSize = 12.sp,
+                modifier = Modifier.padding(top = 4.dp)
+            )
         }
+
+        // Divider
+        Divider(
+            modifier = Modifier.padding(vertical = 16.dp),
+            color = Color.Gray.copy(alpha = 0.3f)
+        )
     }
 }
 
 @Composable
 private fun CashbackSection(
     availableCashback: Double,
-    selectedCashback: Double,
+    enteredCashback: Double,
     onCashbackChange: (Double) -> Unit,
+    billAmount: Double,
     modifier: Modifier = Modifier
 ) {
-    Card(
-        modifier = modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = Color.White),
-        shape = RoundedCornerShape(12.dp),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+    Column(
+        modifier = modifier.fillMaxWidth()
+            .padding(horizontal = 16.dp)
     ) {
-        Column(
-            modifier = Modifier.padding(16.dp)
-        ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = "Available Cashback: ₹${String.format("%.2f", availableCashback)}",
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.Medium,
-                    color = SlashColors.TextPrimary
-                )
+        Text(
+            text = "Available Cashback: ₹${String.format("%.2f", availableCashback)}",
+            fontSize = 16.sp,
+            fontWeight = FontWeight.Medium,
+            color = SlashColors.TextPrimary,
+            modifier = Modifier.padding(bottom = 8.dp)
+        )
 
-                Icon(
-                    imageVector = Icons.Default.ExpandMore,
-                    contentDescription = null,
-                    tint = SlashColors.TextSecondary
-                )
-            }
+        Text(
+            text = "Maximum Cashback | Enter Cashback Manually",
+            fontSize = 14.sp,
+            color = Color.Gray,
+            modifier = Modifier.padding(bottom = 8.dp)
+        )
 
-            Spacer(modifier = Modifier.height(12.dp))
-
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Checkbox(
-                    checked = selectedCashback == availableCashback,
-                    onCheckedChange = { isChecked ->
-                        onCashbackChange(if (isChecked) availableCashback else 0.0)
-                    },
-                    colors = CheckboxDefaults.colors(
-                        checkedColor = SlashColors.Primary
-                    )
-                )
-
-                Column(
-                    modifier = Modifier.weight(1f)
-                ) {
-                    Text(
-                        text = "Maximum Cashback: Enter Cashback Manually",
-                        fontSize = 14.sp,
-                        color = SlashColors.TextPrimary,
-                        modifier = Modifier.padding(start = 8.dp)
-                    )
-
-                    Text(
-                        text = "₹${String.format("%.2f", availableCashback)}",
-                        fontSize = 12.sp,
-                        color = SlashColors.TextSecondary,
-                        modifier = Modifier.padding(start = 8.dp, top = 2.dp)
-                    )
+        OutlinedTextField(
+            value = if (enteredCashback > 0) enteredCashback.toString() else "",
+            onValueChange = { newValue ->
+                val amount = newValue.toDoubleOrNull() ?: 0.0
+                val maxAllowed =
+                    minOf(availableCashback, billAmount * 0.2) // 20% of bill or available cashback
+                if (amount <= maxAllowed) {
+                    onCashbackChange(amount)
                 }
-            }
-
-            Text(
-                text = "Note: Up to 20% Cashback can be used in one order",
-                fontSize = 12.sp,
-                color = SlashColors.TextSecondary,
-                modifier = Modifier.padding(top = 8.dp)
+            },
+            placeholder = { Text("₹ 0.00") },
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+            modifier = Modifier.fillMaxWidth(),
+            singleLine = true,
+            colors = OutlinedTextFieldDefaults.colors(
+                focusedBorderColor = SlashColors.Primary,
+                unfocusedBorderColor = Color.Gray.copy(alpha = 0.5f)
             )
-        }
+        )
+
+        Text(
+            text = "NOTE: Up to 20% Cashback can be used in one order",
+            fontSize = 12.sp,
+            color = SlashColors.TextSecondary,
+            modifier = Modifier.padding(top = 8.dp)
+        )
+
+        // Divider
+        Divider(
+            modifier = Modifier.padding(vertical = 16.dp),
+            color = Color.Gray.copy(alpha = 0.3f)
+        )
     }
 }
 
@@ -377,114 +409,118 @@ private fun CouponSection(
     couponCode: String,
     onCouponChange: (String) -> Unit,
     onApplyCoupon: () -> Unit,
+    onRemoveCoupon: () -> Unit,
     isApplied: Boolean,
     error: String,
     modifier: Modifier = Modifier
 ) {
-    Card(
-        modifier = modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = Color.White),
-        shape = RoundedCornerShape(12.dp),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+    Column(
+        modifier = modifier.fillMaxWidth()
+            .padding(horizontal = 16.dp)
     ) {
-        Column(
-            modifier = Modifier.padding(16.dp)
-        ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = "Apply Coupon",
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.Medium,
-                    color = SlashColors.TextPrimary
-                )
+        Text(
+            text = "Apply Coupon",
+            fontSize = 16.sp,
+            fontWeight = FontWeight.Medium,
+            color = SlashColors.TextPrimary,
+            modifier = Modifier.padding(bottom = 8.dp)
+        )
 
-                Icon(
-                    imageVector = Icons.Default.ExpandMore,
-                    contentDescription = null,
-                    tint = SlashColors.TextSecondary
-                )
-            }
-
-            Spacer(modifier = Modifier.height(12.dp))
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.Top
-            ) {
-                OutlinedTextField(
-                    value = couponCode,
-                    onValueChange = onCouponChange,
-                    label = { Text("Enter your coupon code") },
-                    placeholder = { Text("SAVE20") },
-                    modifier = Modifier.weight(1f),
-                    isError = error.isNotEmpty(),
-                    enabled = !isApplied,
-                    singleLine = true
-                )
-
-                Spacer(modifier = Modifier.width(8.dp))
-
-                Button(
-                    onClick = onApplyCoupon,
-                    enabled = couponCode.isNotEmpty() && !isApplied,
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = if (isApplied) SlashColors.Primary else SlashColors.Primary,
-                        disabledContainerColor = Color.Gray
-                    ),
-                    modifier = Modifier.height(56.dp)
-                ) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        if (isApplied) {
-                            Icon(
-                                imageVector = Icons.Default.Check,
-                                contentDescription = null,
-                                modifier = Modifier.size(16.dp),
-                                tint = Color.White
-                            )
-                            Spacer(modifier = Modifier.width(4.dp))
-                        }
-                        Text(
-                            text = if (isApplied) "Applied" else "Apply",
-                            color = Color.White,
-                            fontSize = 14.sp
+        OutlinedTextField(
+            value = couponCode,
+            onValueChange = onCouponChange,
+            placeholder = { Text("Enter your coupon code") },
+            modifier = Modifier.fillMaxWidth(),
+            isError = error.isNotEmpty(),
+            enabled = !isApplied,
+            singleLine = true,
+            colors = OutlinedTextFieldDefaults.colors(
+                focusedBorderColor = if (isApplied) Color.Green else SlashColors.Primary,
+                unfocusedBorderColor = if (isApplied) Color.Green else Color.Gray.copy(alpha = 0.5f)
+            ),
+            trailingIcon = {
+                Row {
+                    if (isApplied) {
+                        Icon(
+                            imageVector = Icons.Default.Check,
+                            contentDescription = "Applied",
+                            tint = Color.Green,
+                            modifier = Modifier.size(20.dp)
                         )
+                    }
+
+                    if (couponCode.isNotEmpty()) {
+                        if (isApplied) {
+                            IconButton(
+                                onClick = onRemoveCoupon,
+                                modifier = Modifier.size(24.dp)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Close,
+                                    contentDescription = "Remove",
+                                    tint = Color.Red,
+                                    modifier = Modifier.size(16.dp)
+                                )
+                            }
+                        } else {
+                            Button(
+                                onClick = onApplyCoupon,
+                                enabled = couponCode.isNotEmpty(),
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = SlashColors.Primary
+                                ),
+                                modifier = Modifier
+                                    .height(40.dp)
+                                    .padding(end = 4.dp)
+                            ) {
+                                Text(
+                                    text = "Apply",
+                                    color = Color.White,
+                                    fontSize = 12.sp
+                                )
+                            }
+                        }
                     }
                 }
             }
+        )
 
-            if (error.isNotEmpty()) {
-                Text(
-                    text = error,
-                    color = MaterialTheme.colorScheme.error,
-                    fontSize = 12.sp,
-                    modifier = Modifier.padding(top = 4.dp)
-                )
-            }
+        if (error.isNotEmpty()) {
+            Text(
+                text = error,
+                color = MaterialTheme.colorScheme.error,
+                fontSize = 12.sp,
+                modifier = Modifier.padding(top = 4.dp)
+            )
         }
+
+        // Divider
+        Divider(
+            modifier = Modifier.padding(vertical = 16.dp),
+            color = Color.Gray.copy(alpha = 0.3f)
+        )
     }
 }
 
+
 @Composable
 private fun BillingSummarySection(
+    storeName: String,
     billAmount: Double,
     vendorDiscount: Double,
     cashbackUsed: Double,
     couponDiscount: Double,
     tax: Double,
     grandTotal: Double,
+    isVendorDiscountApplicable: Boolean, // Add this parameter
+    minimumOrderAmount: Double = 0.0, // Add this parameter
     modifier: Modifier = Modifier
 ) {
     Card(
         modifier = modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(containerColor = Color.White),
         shape = RoundedCornerShape(12.dp),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
     ) {
         Column(
             modifier = Modifier.padding(16.dp)
@@ -499,20 +535,30 @@ private fun BillingSummarySection(
             Spacer(modifier = Modifier.height(12.dp))
 
             // Store name
-            BillingSummaryRow("ABC Grocery Store", "")
+            BillingSummaryRow(storeName, "")
             BillingSummaryRow("Bill Total", "₹${String.format("%.2f", billAmount)}")
             BillingSummaryRow("Tax", "₹${String.format("%.2f", tax)}")
 
-            if (vendorDiscount > 0) {
-                BillingSummaryRow("Vendor Discount", "-₹${String.format("%.2f", vendorDiscount)}")
+            // Vendor discount with conditional display
+            if (isVendorDiscountApplicable && vendorDiscount > 0) {
+                BillingSummaryRow("Vendor Discount", "- ₹${String.format("%.2f", vendorDiscount)}")
+            } else if (!isVendorDiscountApplicable && minimumOrderAmount > 0) {
+                // Show message about minimum order requirement
+                Text(
+                    text = "* Vendor discount applicable on orders above ₹${String.format("%.2f", minimumOrderAmount)}",
+                    fontSize = 12.sp,
+                    color = SlashColors.OrangeBg,
+                    fontStyle = androidx.compose.ui.text.font.FontStyle.Italic,
+                    modifier = Modifier.padding(vertical = 4.dp)
+                )
             }
 
             if (cashbackUsed > 0) {
-                BillingSummaryRow("Cashback", "-₹${String.format("%.2f", cashbackUsed)}")
+                BillingSummaryRow("Cashback", "- ₹${String.format("%.2f", cashbackUsed)}")
             }
 
             if (couponDiscount > 0) {
-                BillingSummaryRow("Coupon Discount", "-₹${String.format("%.2f", couponDiscount)}")
+                BillingSummaryRow("Coupon Discount", "- ₹${String.format("%.2f", couponDiscount)}")
             }
 
             Divider(
@@ -562,43 +608,6 @@ private fun BillingSummaryRow(
                 text = value,
                 fontSize = 14.sp,
                 color = SlashColors.TextPrimary
-            )
-        }
-    }
-}
-
-@Composable
-private fun PayButton(
-    amount: Double,
-    enabled: Boolean,
-    isLoading: Boolean,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier
-) {
-    Button(
-        onClick = onClick,
-        enabled = enabled && !isLoading,
-        modifier = modifier
-            .fillMaxWidth()
-            .height(56.dp),
-        colors = ButtonDefaults.buttonColors(
-            containerColor = SlashColors.Primary,
-            disabledContainerColor = SlashColors.ButtonDisabled
-        ),
-        shape = RoundedCornerShape(12.dp)
-    ) {
-        if (isLoading) {
-            CircularProgressIndicator(
-                color = Color.White,
-                modifier = Modifier.size(24.dp),
-                strokeWidth = 2.dp
-            )
-        } else {
-            Text(
-                text = "PAY ₹${String.format("%.2f", amount)}",
-                fontSize = 16.sp,
-                fontWeight = FontWeight.Bold,
-                color = Color.White
             )
         }
     }

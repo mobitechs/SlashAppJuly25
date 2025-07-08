@@ -86,41 +86,20 @@ fun String.isValidOtp(): ValidationResult =
 fun String.isValidOptional(fieldName: String, maxLength: Int = 50): ValidationResult =
     ValidationUtils.validateOptional(this, fieldName, maxLength)
 
-//
-//fun validatePhoneNumber(phone: String): String {
-//    return when {
-//        phone.isEmpty() -> "Phone number is required"
-//        phone.length < 10 -> "Phone number must be at least 10 digits"
-//        !phone.all { it.isDigit() } -> "Phone number should contain only digits"
-//        else -> ""
-//    }
-//}
-//
-//fun isValidPhoneNumber(phone: String): Boolean {
-//    return phone.length >= 10 && phone.all { it.isDigit() }
-//}
-//
-//fun validateEmail(email: String): String {
-//    return when {
-//        email.isEmpty() -> "Email is required"
-//        !email.contains("@") -> "Email must contain '@' symbol"
-//        !email.contains(".") -> "Email must contain a dot '.' symbol"
-//        email.indexOf('@') > email.indexOf('.') -> "The dot (.) should come after the '@' symbol"
-//        else -> ""
-//    }
-//}
-//
-//fun isValidEmail(email: String): Boolean {
-//    return email.contains("@") && email.contains(".") && email.indexOf('@') < email.indexOf('.')
-//}
-//
-//fun validateInputFiled(input: String, inputFiledName:String ): String {
-//    return when {
-//        input.isEmpty() -> "$inputFiledName is required"
-//        else -> ""
-//    }
-//}
-//
-//fun isValidInputField(input: String): Boolean {
-//    return input.isEmpty()
-//}
+
+fun formatDecimalString(value: String): String {
+    if (value.isEmpty()) return value
+
+    return try {
+        val doubleValue = value.toDouble()
+        if (doubleValue % 1.0 == 0.0) {
+            // It's a whole number, remove decimal point
+            doubleValue.toInt().toString()
+        } else {
+            // It has decimal places, keep them but remove trailing zeros
+            value.toBigDecimal().stripTrailingZeros().toPlainString()
+        }
+    } catch (e: NumberFormatException) {
+        value // Return original if not a valid number
+    }
+}

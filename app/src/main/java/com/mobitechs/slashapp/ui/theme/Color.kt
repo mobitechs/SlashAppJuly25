@@ -49,6 +49,7 @@ val StoreCardBackground = Color(0xFFE8F5E8) // Light green background
     val SecondaryText = Color(0xFF6B6B6B) // Medium gray for secondary text
     val CategoryText = Color(0xFF757575) // Gray for category text
     val DistanceText = Color(0xFF424242) // Dark gray for distance text
+    val OrangeBg = Color(0xFFF67849) // Dark gray for distance text
 
     // Background Colors
     val SectionBackground = Color(0xFFF8F8F8) // Light gray for sections below background image
