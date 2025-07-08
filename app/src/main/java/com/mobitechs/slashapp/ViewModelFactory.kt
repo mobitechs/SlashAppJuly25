@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import com.mobitechs.slashapp.data.repository.AuthRepository
+import com.mobitechs.slashapp.data.repository.QRScannerRepository
 import com.mobitechs.slashapp.ui.viewmodels.AuthOtpVerificationViewModel
 import com.mobitechs.slashapp.ui.viewmodels.AuthPhoneViewModel
 import com.mobitechs.slashapp.ui.viewmodels.AuthRegisterViewModel
@@ -13,12 +14,16 @@ import com.mobitechs.slashapp.ui.viewmodels.BottomMenuStoreViewModel
 import com.mobitechs.slashapp.ui.viewmodels.BottomMenuTransactionViewModel
 import com.mobitechs.slashapp.ui.viewmodels.HomeViewModel
 import com.mobitechs.slashapp.ui.viewmodels.SplashViewModel
+import com.mobitechs.slashapp.ui.viewmodels.TransactionViewModel
+
+//import com.mobitechs.slashapp.ui.viewmodels.TransactionViewModel
 
 
 class ViewModelFactory(
 
     private val context: Context,
     private val authRepository: AuthRepository,
+    private val qRScannerRepository: QRScannerRepository,
 ) : ViewModelProvider.Factory {
 
 
@@ -48,7 +53,7 @@ class ViewModelFactory(
             }
 
             modelClass.isAssignableFrom(BottomMenuScanViewModel::class.java) -> {
-                BottomMenuScanViewModel() as T
+                BottomMenuScanViewModel(qRScannerRepository) as T
             }
 
             modelClass.isAssignableFrom(BottomMenuRewardViewModel::class.java) -> {
@@ -57,6 +62,10 @@ class ViewModelFactory(
 
             modelClass.isAssignableFrom( BottomMenuStoreViewModel::class.java) -> {
                 BottomMenuStoreViewModel() as T
+            }
+
+            modelClass.isAssignableFrom(TransactionViewModel::class.java) -> {
+                TransactionViewModel(qRScannerRepository,authRepository) as T
             }
 
 

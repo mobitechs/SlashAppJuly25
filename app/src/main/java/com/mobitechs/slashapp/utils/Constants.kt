@@ -19,7 +19,20 @@ object Constants {
     const val PREF_USER = "user_data"
 
 
+    // Timeouts
+    const val NETWORK_TIMEOUT = 30L
 
+    // Validation
+    const val MIN_PHONE_LENGTH = 10
+    const val MAX_PHONE_LENGTH = 10
+    const val OTP_LENGTH = 6
+    const val MAX_NAME_LENGTH = 50
+
+    // QR Scanner
+    const val QR_SCAN_RESULT_OK = "qr_scan_ok"
+    const val QR_SCAN_RESULT_ERROR = "qr_scan_error"
+
+    const val QR_DETECTION_THROTTLE_MS = 2000L
 
 }
 

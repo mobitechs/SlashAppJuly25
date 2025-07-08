@@ -3,14 +3,20 @@ package com.mobitechs.slashapp.ui.screens
 
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AttachMoney
 import androidx.compose.material.icons.filled.ChatBubble
+import androidx.compose.material.icons.filled.FeaturedPlayList
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.QrCode
 import androidx.compose.material.icons.filled.School
 import androidx.compose.material.icons.filled.ShoppingCart
+import androidx.compose.material.icons.outlined.AttachMoney
 import androidx.compose.material.icons.outlined.ChatBubbleOutline
+import androidx.compose.material.icons.outlined.FeaturedPlayList
 import androidx.compose.material.icons.outlined.Home
 import androidx.compose.material.icons.outlined.Person
+import androidx.compose.material.icons.outlined.QrCode
 import androidx.compose.material.icons.outlined.School
 import androidx.compose.material.icons.outlined.ShoppingCart
 import androidx.compose.material3.Icon
@@ -42,26 +48,26 @@ fun AppBottomNavigation(
             ),
             NavigationItem(
                 title = "Transaction",
-                selectedIcon = Icons.Filled.School,
-                unselectedIcon = Icons.Outlined.School,
+                selectedIcon = Icons.Filled.FeaturedPlayList,
+                unselectedIcon = Icons.Outlined.FeaturedPlayList,
                 route = Screen.BottomMenuTransactionScreen
             ),
             NavigationItem(
                 title = "Scan & Pay",
-                selectedIcon = Icons.Filled.ShoppingCart,
-                unselectedIcon = Icons.Outlined.ShoppingCart,
+                selectedIcon = Icons.Filled.QrCode,
+                unselectedIcon = Icons.Outlined.QrCode,
                 route = Screen.BottomMenuScanScreen
             ),
             NavigationItem(
                 title = "Rewards",
-                selectedIcon = Icons.Filled.ChatBubble,
-                unselectedIcon = Icons.Outlined.ChatBubbleOutline,
+                selectedIcon = Icons.Filled.AttachMoney,
+                unselectedIcon = Icons.Outlined.AttachMoney,
                 route = Screen.BottomMenuRewardScreen
             ),
             NavigationItem(
                 title = "Store",
-                selectedIcon = Icons.Filled.Person,
-                unselectedIcon = Icons.Outlined.Person,
+                selectedIcon = Icons.Filled.ShoppingCart,
+                unselectedIcon = Icons.Outlined.ShoppingCart,
                 route = Screen.BottomMenuStoreScreen
             )
         )

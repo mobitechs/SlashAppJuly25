@@ -36,6 +36,8 @@ import com.mobitechs.slashapp.ui.viewmodels.SplashViewModel
 import kotlin.collections.contains
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.WindowInsets
+import com.mobitechs.slashapp.ui.screens.TransactionScreen
+import com.mobitechs.slashapp.ui.viewmodels.TransactionViewModel
 
 class MainActivity : ComponentActivity() {
 
@@ -53,6 +55,7 @@ class MainActivity : ComponentActivity() {
         val viewModelFactory = ViewModelFactory(
             applicationContext,
             app.authRepository,
+            app.qRScannerRepository,
         )
 
         setContent {
@@ -207,6 +210,31 @@ fun AppNavigation(viewModelFactory: ViewModelFactory) {
             }
 
 
+            // QR Scanner Screen
+            composable(Screen.BottomMenuScanScreen.route) {
+                val viewModel: BottomMenuScanViewModel = viewModel(factory = viewModelFactory)
+                BottomMenuScanScreen(
+                    viewModel = viewModel,
+                    navController = navController
+                )
+            }
+
+            // Transaction Screen
+            composable(Screen.TransactionScreen.route+"/{storeId}") { backStackEntry ->
+                val storeId = backStackEntry.arguments?.getString("storeId")?.toIntOrNull() ?: 0
+                val viewModel: TransactionViewModel = viewModel(factory = viewModelFactory)
+
+                TransactionScreen(
+                    storeId = storeId,
+                    viewModel = viewModel,
+                    navController = navController,
+                    onBackClick = {
+                        navController.popBackStack()
+                    }
+                )
+            }
+
+
 
 
         }
@@ -226,61 +254,10 @@ sealed class Screen(val route: String) {
     object BottomMenuScanScreen : Screen("BottomMenuScanScreen")
     object BottomMenuRewardScreen : Screen("BottomMenuRewardScreen")
     object BottomMenuStoreScreen : Screen("BottomMenuStoreScreen")
+    object TransactionScreen : Screen("TransactionScreen")
 
 
 
 }
-
-
-
-//class MainActivity : ComponentActivity() {
-//    override fun onCreate(savedInstanceState: Bundle?) {
-//        super.onCreate(savedInstanceState)
-//        enableEdgeToEdge()
-//        setContent {
-//            SlashTheme {
-//                Surface(
-//                    modifier = Modifier.fillMaxSize(),
-//                    color = MaterialTheme.colorScheme.background
-//                ) {
-//                    SlashApp()
-//                }
-//            }
-//        }
-//    }
-//}
-
-//
-//@Composable
-//fun SlashApp() {
-//    val navController = rememberNavController()
-//
-//    NavHost(
-//        navController = navController,
-//        startDestination = "phone_input"
-//    ) {
-//        composable("phone_input") {
-//            PhoneInputScreen(
-//                onNavigateToOtp = { phoneNumber ->
-//                    navController.navigate("otp_verification/$phoneNumber")
-//                }
-//            )
-//        }
-//
-//        composable("otp_verification/{phoneNumber}") { backStackEntry ->
-//            val phoneNumber = backStackEntry.arguments?.getString("phoneNumber") ?: ""
-//            OtpVerificationScreen(
-//                phoneNumber = phoneNumber,
-//                onBackClick = {
-//                    navController.popBackStack()
-//                },
-//                onVerificationSuccess = {
-//                    // Navigate to next screen (signup or home)
-//                    // navController.navigate("signup")
-//                }
-//            )
-//        }
-//    }
-//}
 
 

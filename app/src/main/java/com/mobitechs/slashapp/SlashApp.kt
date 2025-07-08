@@ -9,6 +9,7 @@ import com.mobitechs.slashapp.data.api.AuthInterceptor
 import com.mobitechs.slashapp.data.api.RetrofitClient
 import com.mobitechs.slashapp.data.local.SharedPrefsManager
 import com.mobitechs.slashapp.data.repository.AuthRepository
+import com.mobitechs.slashapp.data.repository.QRScannerRepository
 import com.razorpay.Checkout
 
 class SlashApp : Application() {
@@ -31,6 +32,7 @@ class SlashApp : Application() {
     lateinit var appContext: Context
 
     val authRepository by lazy { AuthRepository(apiService, sharedPrefsManager) }
+    val qRScannerRepository by lazy { QRScannerRepository(apiService, sharedPrefsManager) }
 
 
     override fun onCreate() {
