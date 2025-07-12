@@ -25,11 +25,14 @@ import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.LocalOffer
 import androidx.compose.material.icons.filled.Percent
+import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Wallet
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Checkbox
+import androidx.compose.material3.CheckboxDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Divider
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -40,10 +43,7 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -127,7 +127,6 @@ fun TransactionScreen(
                     uiState.storeDetails?.let { storeWithCategory ->
                         StoreDetailsCard(store = storeWithCategory)
                     }
-                    Spacer(modifier = Modifier.height(16.dp))
                 }
 
                 item {
@@ -145,8 +144,11 @@ fun TransactionScreen(
                         maxAllowedCashback = uiState.maxAllowedCashback,
                         onCashbackChange = viewModel::onCashbackChange,
                         onMaxCashbackClick = viewModel::onMaxCashbackClick,
+                        onClearCashback = viewModel::onClearCashback,
                         billAmount = uiState.billAmount.toDoubleOrNull() ?: 0.0,
-                        cashbackPercentage = uiState.cashbackPercentage
+                        cashbackPercentage = uiState.cashbackPercentage,
+                        isProfileLoading = uiState.isProfileLoading,
+                        onRefreshWallet = viewModel::refreshWalletDetails
                     )
                 }
 
@@ -183,7 +185,7 @@ fun TransactionScreen(
 
             // Pay Button
             Surface(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier.fillMaxWidth().padding(bottom = 40.dp),
                 color = Color.White,
                 shadowElevation = 8.dp
             ) {
@@ -436,10 +438,21 @@ private fun CashbackSection(
     maxAllowedCashback: Double,
     onCashbackChange: (String) -> Unit,
     onMaxCashbackClick: () -> Unit,
+    onClearCashback: () -> Unit,
     billAmount: Double,
     cashbackPercentage: String,
+    isProfileLoading: Boolean,
+    onRefreshWallet: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    // Track if user wants to use max cashback
+    var useMaxCashback by remember { mutableStateOf(false) }
+
+    // Update checkbox state when cashback changes
+    LaunchedEffect(enteredCashback, maxAllowedCashback) {
+        useMaxCashback = enteredCashback == maxAllowedCashback && maxAllowedCashback > 0
+    }
+
     Card(
         modifier = modifier
             .fillMaxWidth()
@@ -467,24 +480,67 @@ private fun CashbackSection(
                     )
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(
-                        text = "Available Cashback",
+                        text = "Wallet Details",
                         fontSize = 16.sp,
                         fontWeight = FontWeight.Medium,
                         color = SlashColors.TextPrimary
                     )
                 }
 
-                Text(
-                    text = "₹${String.format("%.2f", availableCashback)}",
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = SlashColors.Primary
-                )
+                IconButton(
+                    onClick = onRefreshWallet,
+                    enabled = !isProfileLoading,
+                    modifier = Modifier.size(32.dp)
+                ) {
+                    if (isProfileLoading) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(16.dp),
+                            color = SlashColors.Primary,
+                            strokeWidth = 2.dp
+                        )
+                    } else {
+                        Icon(
+                            imageVector = Icons.Default.Refresh,
+                            contentDescription = "Refresh wallet",
+                            tint = SlashColors.Primary,
+                            modifier = Modifier.size(18.dp)
+                        )
+                    }
+                }
             }
 
             Spacer(modifier = Modifier.height(12.dp))
 
-            // Cashback usage info
+            // Available Cashback Display
+            Card(
+                colors = CardDefaults.cardColors(containerColor = SlashColors.Primary.copy(alpha = 0.05f)),
+                shape = RoundedCornerShape(8.dp)
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(12.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = "Available Cashback",
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.Medium,
+                        color = SlashColors.TextSecondary
+                    )
+                    Text(
+                        text = "₹${String.format("%.2f", availableCashback)}",
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = SlashColors.Primary
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            // Max usable info
             Card(
                 colors = CardDefaults.cardColors(containerColor = SlashColors.White),
                 shape = RoundedCornerShape(8.dp)
@@ -512,46 +568,72 @@ private fun CashbackSection(
 
             Spacer(modifier = Modifier.height(12.dp))
 
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                OutlinedTextField(
-                    value = if (enteredCashback > 0) String.format("%.2f", enteredCashback) else "",
-                    onValueChange = onCashbackChange,
-                    placeholder = { Text("0.00", color = SlashColors.TextHint) },
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                    modifier = Modifier.weight(1f),
-                    singleLine = true,
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = SlashColors.Primary,
-                        unfocusedBorderColor = Color.Gray.copy(alpha = 0.5f)
-                    ),
-                    prefix = {
-                        Text(
-                            text = "₹ ",
-                            fontSize = 14.sp,
-                            color = SlashColors.TextPrimary
-                        )
-                    }
-                )
+            // Cashback input section
+            Text(
+                text = "Use Cashback",
+                fontSize = 14.sp,
+                fontWeight = FontWeight.Medium,
+                color = SlashColors.TextSecondary,
+                modifier = Modifier.padding(bottom = 8.dp)
+            )
 
-                Button(
-                    onClick = onMaxCashbackClick,
-                    enabled = maxAllowedCashback > 0,
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = SlashColors.Primary.copy(alpha = 0.1f),
-                        contentColor = SlashColors.Primary
-                    ),
-                    modifier = Modifier.height(56.dp)
-                ) {
+            // Cashback input field
+            OutlinedTextField(
+                value = if (enteredCashback > 0) String.format("%.2f", enteredCashback) else "",
+                onValueChange = { newValue ->
+                    useMaxCashback = false // Uncheck when user manually enters value
+                    onCashbackChange(newValue)
+                },
+                placeholder = { Text("0.00", color = SlashColors.TextHint) },
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                modifier = Modifier.fillMaxWidth(),
+                singleLine = true,
+                enabled = !useMaxCashback, // Disable when max checkbox is checked
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedBorderColor = SlashColors.Primary,
+                    unfocusedBorderColor = Color.Gray.copy(alpha = 0.5f),
+                    disabledBorderColor = SlashColors.Primary.copy(alpha = 0.5f)
+                ),
+                prefix = {
                     Text(
-                        text = "MAX",
-                        fontSize = 12.sp,
-                        fontWeight = FontWeight.Bold
+                        text = "₹ ",
+                        fontSize = 14.sp,
+                        color = SlashColors.TextPrimary
                     )
                 }
+            )
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            // Use Max Cashback Checkbox
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Checkbox(
+                    checked = useMaxCashback,
+                    onCheckedChange = { checked ->
+                        useMaxCashback = checked
+                        if (checked) {
+                            onMaxCashbackClick()
+                        } else {
+                            onClearCashback()
+                        }
+                    },
+                    enabled = maxAllowedCashback > 0,
+                    colors = CheckboxDefaults.colors(
+                        checkedColor = SlashColors.Primary,
+                        uncheckedColor = SlashColors.InputBorder,
+                        checkmarkColor = SlashColors.White
+                    )
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(
+                    text = "Use maximum cashback (₹${String.format("%.2f", maxAllowedCashback)})",
+                    fontSize = 14.sp,
+                    color = if (maxAllowedCashback > 0) SlashColors.TextPrimary else SlashColors.TextHint,
+                    fontWeight = FontWeight.Medium
+                )
             }
 
             if (enteredCashback > 0) {
@@ -611,7 +693,7 @@ private fun CouponSection(
 
             Spacer(modifier = Modifier.height(12.dp))
 
-            // Show applied coupon details
+            // Show applied coupon details when coupon is applied
             if (isApplied && appliedCouponDetails.isNotEmpty()) {
                 Card(
                     modifier = Modifier.fillMaxWidth(),
@@ -670,65 +752,66 @@ private fun CouponSection(
                         }
                     }
                 }
-                Spacer(modifier = Modifier.height(8.dp))
             }
 
-            OutlinedTextField(
-                value = couponCode,
-                onValueChange = onCouponChange,
-                placeholder = {
-                    Text(
-                        "Enter your coupon code",
-                        color = SlashColors.TextHint
-                    )
-                },
-                modifier = Modifier.fillMaxWidth(),
-                isError = error.isNotEmpty(),
-                enabled = !isApplied,
-                singleLine = true,
-                colors = OutlinedTextFieldDefaults.colors(
-                    focusedBorderColor = if (isApplied) SlashColors.SuccessGreen else SlashColors.Primary,
-                    unfocusedBorderColor = if (isApplied) SlashColors.SuccessGreen else Color.Gray.copy(alpha = 0.5f),
-                    disabledBorderColor = SlashColors.SuccessGreen.copy(alpha = 0.5f)
-                ),
-                trailingIcon = {
-                    if (!isApplied && couponCode.isNotEmpty()) {
-                        Button(
-                            onClick = onApplyCoupon,
-                            enabled = !isLoading && couponCode.length >= 3,
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = SlashColors.Primary
-                            ),
-                            modifier = Modifier
-                                .height(40.dp)
-                                .padding(end = 4.dp)
-                        ) {
-                            if (isLoading) {
-                                CircularProgressIndicator(
-                                    modifier = Modifier.size(16.dp),
-                                    color = Color.White,
-                                    strokeWidth = 2.dp
-                                )
-                            } else {
-                                Text(
-                                    text = "Apply",
-                                    color = Color.White,
-                                    fontSize = 12.sp,
-                                    fontWeight = FontWeight.Medium
-                                )
+            // Only show input field when coupon is not applied
+            if (!isApplied) {
+                OutlinedTextField(
+                    value = couponCode,
+                    onValueChange = onCouponChange,
+                    placeholder = {
+                        Text(
+                            "Enter your coupon code",
+                            color = SlashColors.TextHint
+                        )
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                    isError = error.isNotEmpty(),
+                    singleLine = true,
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = SlashColors.Primary,
+                        unfocusedBorderColor = Color.Gray.copy(alpha = 0.5f),
+                        errorBorderColor = SlashColors.InputBorderError
+                    ),
+                    trailingIcon = {
+                        if (couponCode.isNotEmpty()) {
+                            Button(
+                                onClick = onApplyCoupon,
+                                enabled = !isLoading && couponCode.length >= 3,
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = SlashColors.Primary
+                                ),
+                                modifier = Modifier
+                                    .height(40.dp)
+                                    .padding(end = 4.dp)
+                            ) {
+                                if (isLoading) {
+                                    CircularProgressIndicator(
+                                        modifier = Modifier.size(16.dp),
+                                        color = Color.White,
+                                        strokeWidth = 2.dp
+                                    )
+                                } else {
+                                    Text(
+                                        text = "Apply",
+                                        color = Color.White,
+                                        fontSize = 12.sp,
+                                        fontWeight = FontWeight.Medium
+                                    )
+                                }
                             }
                         }
                     }
-                }
-            )
-
-            if (error.isNotEmpty()) {
-                Spacer(modifier = Modifier.height(4.dp))
-                Text(
-                    text = error,
-                    color = MaterialTheme.colorScheme.error,
-                    fontSize = 12.sp
                 )
+
+                if (error.isNotEmpty()) {
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        text = error,
+                        color = MaterialTheme.colorScheme.error,
+                        fontSize = 12.sp
+                    )
+                }
             }
         }
     }
@@ -798,7 +881,7 @@ private fun BillingSummarySection(
                     "- ₹${String.format("%.2f", vendorDiscount)}",
                     textColor = SlashColors.SuccessGreen
                 )
-            } else if (!isVendorDiscountApplicable && minimumOrderAmount > 0) {
+            } else if (!isVendorDiscountApplicable && minimumOrderAmount > 0 && billAmount > 0) {
                 Card(
                     colors = CardDefaults.cardColors(containerColor = SlashColors.WarningOrange.copy(alpha = 0.1f)),
                     shape = RoundedCornerShape(6.dp)

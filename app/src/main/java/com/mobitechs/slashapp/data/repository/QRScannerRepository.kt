@@ -74,14 +74,5 @@ class QRScannerRepository(
         }
     }
 
-    suspend fun getUserWallet(): Wallet = withContext(Dispatchers.IO) {
-        val response = apiService.getUserWallet()
 
-        if (response.isSuccessful) {
-            val apiResponse = response.body() ?: throw Exception("Empty response body")
-            return@withContext apiResponse
-        } else {
-            throw Exception("Send OTP failed: ${response.message()}")
-        }
-    }
 }

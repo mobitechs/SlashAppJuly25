@@ -19,7 +19,7 @@ data class TransactionUiState(
     // Transaction fields
     val billAmount: String = "",
     val billAmountError: String = "",
-    val availableCashback: Double = 500.0,
+    val availableCashback: Double = 0.0,
     val enteredCashback: Double = 0.0,
     val maxAllowedCashback: Double = 0.0,
     val couponCode: String = "",
@@ -27,6 +27,11 @@ data class TransactionUiState(
     val isCouponApplied: Boolean = false,
     val appliedCouponDetails: String = "",
     val isCouponLoading: Boolean = false,
+
+    // User wallet details from API
+    val totalCashbackEarned: Double = 0.0,
+    val totalCashbackRedeemed: Double = 0.0,
+    val totalCouponRedeemed: Double = 0.0,
 
     // Calculated fields
     val vendorDiscount: Double = 0.0,
@@ -36,7 +41,8 @@ data class TransactionUiState(
     val totalSavings: Double = 0.0,
     val isVendorDiscountApplicable: Boolean = false,
 
-    val navigateToPayment: Boolean = false
+    val navigateToPayment: Boolean = false,
+    val isProfileLoading: Boolean = false
 ) {
     val isPayButtonEnabled: Boolean
         get() = billAmount.isNotEmpty() &&
@@ -60,17 +66,77 @@ class TransactionViewModel(
     private val _uiState = MutableStateFlow(TransactionUiState())
     val uiState: StateFlow<TransactionUiState> = _uiState.asStateFlow()
 
+    init {
+        // Load user profile to get latest available cashback when ViewModel is created
+        loadUserProfile()
+    }
+
+    private fun loadUserProfile() {
+        _uiState.update { it.copy(isProfileLoading = true) }
+
+        viewModelScope.launch {
+            try {
+                val profileResponse = authRepository.getUserDetails()
+                if (profileResponse.success) {
+                    val user = profileResponse.data
+                    val availableCashback = user.available_cashback.toDoubleOrNull() ?: 0.0
+                    val totalEarned = user.total_cashback_earned.toDoubleOrNull() ?: 0.0
+                    val totalRedeemed = user.total_cashback_redeemed.toDoubleOrNull() ?: 0.0
+                    val totalCouponRedeemed = user.total_coupon_redeemed.toDoubleOrNull() ?: 0.0
+
+                    _uiState.update { currentState ->
+                        val updatedState = currentState.copy(
+                            availableCashback = availableCashback,
+                            totalCashbackEarned = totalEarned,
+                            totalCashbackRedeemed = totalRedeemed,
+                            totalCouponRedeemed = totalCouponRedeemed,
+                            isProfileLoading = false
+                        )
+
+                        // Recalculate max allowed cashback based on new available cashback
+                        val billAmountValue = currentState.billAmount.toDoubleOrNull() ?: 0.0
+                        val maxCashback = if (billAmountValue > 0) {
+                            minOf(availableCashback, billAmountValue * 0.2)
+                        } else {
+                            0.0
+                        }
+
+                        // Adjust entered cashback if it exceeds the new limit
+                        val adjustedCashback = if (currentState.enteredCashback > maxCashback) {
+                            maxCashback
+                        } else {
+                            currentState.enteredCashback
+                        }
+
+                        val finalState = updatedState.copy(
+                            maxAllowedCashback = maxCashback,
+                            enteredCashback = adjustedCashback
+                        )
+                        calculateTotals(finalState)
+                    }
+                } else {
+                    _uiState.update { it.copy(isProfileLoading = false) }
+                    showToast("Failed to load wallet details: ${profileResponse.message}")
+                }
+            } catch (e: Exception) {
+                _uiState.update { it.copy(isProfileLoading = false) }
+                showToast("Failed to load wallet details: ${e.message}")
+            }
+        }
+    }
+
     fun loadStoreDetails(storeId: Int) {
         _uiState.update { it.copy(isLoading = true, error = "", storeId = storeId) }
 
         viewModelScope.launch {
             try {
                 val storeDetails = qrScannerRepository.getStoreDetails(storeId)
-                _uiState.update {
-                    it.copy(
+                _uiState.update { currentState ->
+                    val updatedState = currentState.copy(
                         isLoading = false,
                         storeDetails = storeDetails.data
                     )
+                    calculateTotals(updatedState)
                 }
             } catch (e: Exception) {
                 _uiState.update {
@@ -79,6 +145,7 @@ class TransactionViewModel(
                         error = e.message ?: "Failed to load store details"
                     )
                 }
+                showToast("Failed to load store details: ${e.message}")
             }
         }
     }
@@ -119,6 +186,7 @@ class TransactionViewModel(
             val validAmount = when {
                 numericAmount < 0 -> 0.0
                 numericAmount > currentState.maxAllowedCashback -> currentState.maxAllowedCashback
+                numericAmount > currentState.availableCashback -> currentState.availableCashback
                 else -> numericAmount
             }
 
@@ -135,14 +203,19 @@ class TransactionViewModel(
         showToast("Maximum cashback applied!")
     }
 
+    fun onClearCashback() {
+        _uiState.update { currentState ->
+            val updatedState = currentState.copy(enteredCashback = 0.0)
+            calculateTotals(updatedState)
+        }
+    }
+
     fun onCouponChange(code: String) {
         _uiState.update { currentState ->
-            val updatedState = currentState.copy(
-                couponCode = code,
-                couponError = "",
-                // Don't reset applied status while typing
+            currentState.copy(
+                couponCode = code.uppercase(), // Auto uppercase coupon codes
+                couponError = ""
             )
-            updatedState
         }
     }
 
@@ -175,12 +248,11 @@ class TransactionViewModel(
                         val discountAmount = couponRes.data.discount_details.discount_amount.toDoubleOrNull() ?: 0.0
                         val couponTitle = couponRes.data.coupon.code ?: "Coupon Applied"
 
-
                         val updatedState = currentState.copy(
                             isCouponApplied = true,
                             couponError = "",
                             couponDiscount = discountAmount,
-                            appliedCouponDetails = "Coupon($couponTitle)",
+                            appliedCouponDetails = couponTitle,
                             isCouponLoading = false
                         )
                         calculateTotals(updatedState)
@@ -236,7 +308,7 @@ class TransactionViewModel(
         val minimumOrderAmount = state.storeDetails?.minimum_order_amount?.toDoubleOrNull() ?: 0.0
 
         // Check if vendor discount is applicable based on minimum order amount
-        val isDiscountApplicable = billAmount >= minimumOrderAmount
+        val isDiscountApplicable = billAmount >= minimumOrderAmount && minimumOrderAmount > 0
 
         // Calculate vendor discount only if bill amount meets minimum requirement
         val vendorDiscount = if (isDiscountApplicable && discountPercentage > 0) {
@@ -287,6 +359,11 @@ class TransactionViewModel(
             return
         }
 
+        if (currentState.enteredCashback > currentState.availableCashback) {
+            showToast("Insufficient cashback balance")
+            return
+        }
+
         _uiState.update { it.copy(isLoading = true) }
 
         viewModelScope.launch {
@@ -309,6 +386,9 @@ class TransactionViewModel(
 
                 showToast(paymentDetails)
 
+                // Refresh user profile after successful payment to update available cashback
+                loadUserProfile()
+
             } catch (e: Exception) {
                 _uiState.update {
                     it.copy(
@@ -319,6 +399,10 @@ class TransactionViewModel(
                 showToast("Payment failed: ${e.message}")
             }
         }
+    }
+
+    fun refreshWalletDetails() {
+        loadUserProfile()
     }
 
     fun clearError() {

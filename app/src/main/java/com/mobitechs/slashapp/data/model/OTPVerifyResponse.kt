@@ -14,6 +14,8 @@ data class OTPVerifyData(
     val user: User
 )
 
+
+
 data class Error(
     val field: String,
     val message: String

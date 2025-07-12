@@ -5,6 +5,7 @@ import com.mobitechs.slashapp.data.model.CouponResponse
 import com.mobitechs.slashapp.data.model.CouponValidationResponse
 import com.mobitechs.slashapp.data.model.CreateTransactionRequest
 import com.mobitechs.slashapp.data.model.OTPVerifyResponse
+import com.mobitechs.slashapp.data.model.ProfileResponse
 import com.mobitechs.slashapp.data.model.RegisterUserRequest
 import com.mobitechs.slashapp.data.model.SendOTPResponse
 import com.mobitechs.slashapp.data.model.SendOtpRequest
@@ -13,7 +14,6 @@ import com.mobitechs.slashapp.data.model.StoreResponse
 import com.mobitechs.slashapp.data.model.TransactionsInitiateResponse
 import com.mobitechs.slashapp.data.model.ValidateCouponRequest
 import com.mobitechs.slashapp.data.model.VerifyOtpRequest
-import com.mobitechs.slashapp.data.model.Wallet
 import retrofit2.Response
 import retrofit2.http.Body
 import retrofit2.http.GET
@@ -32,7 +32,10 @@ interface ApiService {
     @POST("auth/register")
     suspend fun register(@Body request: RegisterUserRequest): Response<OTPVerifyResponse>
 
-    // Store endpoints
+    @GET("users/profile")
+    suspend fun getUserDetails(): Response<ProfileResponse>
+
+    // Store endpoints------------------------------------------------------------------------------------------
     @GET("store/categories")
     suspend fun getCategoryList(): Response<CategoryListResponse>
 
@@ -62,6 +65,5 @@ interface ApiService {
     @POST("transaction/create")
     suspend fun createTransaction(@Body request: CreateTransactionRequest): Response<TransactionsInitiateResponse>
 
-    @GET("user/wallet")
-    suspend fun getUserWallet(): Response<Wallet>
+
 }

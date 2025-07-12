@@ -71,6 +71,21 @@ class AuthRepository(
         }
     }
 
+    suspend fun getUserDetails(): ProfileResponse = withContext(Dispatchers.IO) {
+        val response = apiService.getUserDetails()
+
+        if (response.isSuccessful) {
+            val apiResponse = response.body() ?: throw Exception("Empty response body")
+
+            if (apiResponse.success == true ) {
+                saveAuthData(sharedPrefsManager.getAuthToken().toString(),apiResponse.data)
+            }
+            return@withContext apiResponse
+        } else {
+            throw Exception("Failed to get store details: ${response.message()}")
+        }
+    }
+
 
 
     fun saveAuthData(token: String, user: User) {
