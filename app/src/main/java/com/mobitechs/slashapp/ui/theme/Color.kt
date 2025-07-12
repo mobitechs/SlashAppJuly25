@@ -25,6 +25,9 @@ object SlashColors {
     val TextSecondary = Color(0xFF6B6B6B)  // Medium gray for subtitle
     val TextError = Color(0xFFE53E3E)  // Red for error messages
     val TextHint = Color(0xFF9E9E9E)  // Light gray for placeholders
+    val SuccessGreen = Color(0xFF619958)  // Light gray for placeholders
+    val WarningOrange = Color(0xFFFFA726)  // Light gray for placeholders
+    val SectionDivider = Color(0xFF6B6B6B)  // Light gray for placeholders
 
     // Other colors
     val White = Color(0xFFFFFFFF)

@@ -3,6 +3,7 @@ package com.mobitechs.slashapp.data.repository
 import com.mobitechs.slashapp.data.api.ApiService
 import com.mobitechs.slashapp.data.local.SharedPrefsManager
 import com.mobitechs.slashapp.data.model.CouponResponse
+import com.mobitechs.slashapp.data.model.CouponValidationResponse
 import com.mobitechs.slashapp.data.model.CreateTransactionRequest
 import com.mobitechs.slashapp.data.model.StoreResponse
 import com.mobitechs.slashapp.data.model.TransactionsInitiateResponse
@@ -27,7 +28,7 @@ class QRScannerRepository(
         }
     }
 
-    suspend fun validateCoupon(code: String, storeId: Int, billAmount: Double): CouponResponse = withContext(Dispatchers.IO) {
+    suspend fun validateCoupon(code: String, storeId: Int, billAmount: String): CouponValidationResponse = withContext(Dispatchers.IO) {
         val request = ValidateCouponRequest(code = code, store_id = storeId, bill_amount = billAmount)
         val response = apiService.validateCoupon(request)
 
@@ -35,7 +36,7 @@ class QRScannerRepository(
             val apiResponse = response.body() ?: throw Exception("Empty response body")
             return@withContext apiResponse
         } else {
-            throw Exception("Send OTP failed: ${response.message()}")
+            throw Exception("Coupon Validation failed: ${response.message()}")
         }
     }
 

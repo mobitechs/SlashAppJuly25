@@ -2,6 +2,7 @@ package com.mobitechs.slashapp.data.api
 
 import com.mobitechs.slashapp.data.model.CategoryListResponse
 import com.mobitechs.slashapp.data.model.CouponResponse
+import com.mobitechs.slashapp.data.model.CouponValidationResponse
 import com.mobitechs.slashapp.data.model.CreateTransactionRequest
 import com.mobitechs.slashapp.data.model.OTPVerifyResponse
 import com.mobitechs.slashapp.data.model.RegisterUserRequest
@@ -55,8 +56,8 @@ interface ApiService {
     ): Response<StoreResponse>
 
 
-    @POST("coupon/validate")
-    suspend fun validateCoupon(@Body request: ValidateCouponRequest): Response<CouponResponse>
+    @POST("coupons/validateCoupon")
+    suspend fun validateCoupon(@Body request: ValidateCouponRequest): Response<CouponValidationResponse>
 
     @POST("transaction/create")
     suspend fun createTransaction(@Body request: CreateTransactionRequest): Response<TransactionsInitiateResponse>

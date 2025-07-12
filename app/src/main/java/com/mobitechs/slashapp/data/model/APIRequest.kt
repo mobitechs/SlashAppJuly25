@@ -21,7 +21,7 @@ data class RegisterUserRequest(
 data class ValidateCouponRequest(
     val code: String,
     val store_id: Int,
-    val bill_amount: Double
+    val bill_amount: String
 )
 
 data class CreateTransactionRequest(
