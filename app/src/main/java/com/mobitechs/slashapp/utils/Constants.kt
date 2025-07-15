@@ -34,6 +34,16 @@ object Constants {
     const val QR_SCAN_RESULT_ERROR = "qr_scan_error"
 
     const val QR_DETECTION_THROTTLE_MS = 2000L
+//    const val UPI_PAYEE_NAME = "Pratik Sonawane"
+//    const val UPI_PAYEE_VPA = "sonawane.ptk-8@okhdfcbank"
+
+//    const val UPI_PAYEE_NAME = "Tejaswini Sonawane"
+//    const val UPI_PAYEE_VPA = "9594017823@yescred"
+
+    const val UPI_PAYEE_NAME = "Prarthana Gawas"
+    const val UPI_PAYEE_VPA = "9594017823-4@ybl"
+    const val SUCCESS = "Success"
+    const val FAILED = "Failed"
 
 }
 

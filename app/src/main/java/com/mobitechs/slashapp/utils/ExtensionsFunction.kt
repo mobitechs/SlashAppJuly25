@@ -3,6 +3,7 @@ package com.mobitechs.slashapp.utils
 import android.content.Context
 import android.util.Patterns
 import android.widget.Toast
+import java.util.UUID
 import java.util.regex.Pattern
 
 
@@ -86,6 +87,11 @@ fun String.isValidOtp(): ValidationResult =
 fun String.isValidOptional(fieldName: String, maxLength: Int = 50): ValidationResult =
     ValidationUtils.validateOptional(this, fieldName, maxLength)
 
+
+fun generateTransactionId(): String {
+    val transactionId = UUID.randomUUID().toString().take(8)
+    return transactionId
+}
 
 fun formatDecimalString(value: String): String {
     if (value.isEmpty()) return value

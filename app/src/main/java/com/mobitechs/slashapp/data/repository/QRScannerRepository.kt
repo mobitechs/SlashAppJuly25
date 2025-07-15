@@ -5,8 +5,10 @@ import com.mobitechs.slashapp.data.local.SharedPrefsManager
 import com.mobitechs.slashapp.data.model.CouponResponse
 import com.mobitechs.slashapp.data.model.CouponValidationResponse
 import com.mobitechs.slashapp.data.model.CreateTransactionRequest
+import com.mobitechs.slashapp.data.model.SaveTransactionRequest
 import com.mobitechs.slashapp.data.model.StoreResponse
 import com.mobitechs.slashapp.data.model.TransactionsInitiateResponse
+import com.mobitechs.slashapp.data.model.UpdateTransactionResponse
 import com.mobitechs.slashapp.data.model.ValidateCouponRequest
 import com.mobitechs.slashapp.data.model.Wallet
 import kotlinx.coroutines.Dispatchers
@@ -40,39 +42,28 @@ class QRScannerRepository(
         }
     }
 
-    suspend fun createTransaction(
-        storeId: Int,
-        billAmount: Double,
-        vendorDiscount: Double,
-        cashbackUsed: Double,
-        couponCode: String?,
-        couponDiscount: Double,
-        finalAmount: Double,
-        paymentMethod: String,
-        comment: String?
-    ): TransactionsInitiateResponse = withContext(Dispatchers.IO) {
-        val request = CreateTransactionRequest(
-            user_id = sharedPrefsManager.getUser()!!.id,
-            store_id = storeId,
-            bill_amount = billAmount,
-            vendor_discount = vendorDiscount,
-            cashback_used = cashbackUsed,
-            coupon_code = couponCode,
-            coupon_discount = couponDiscount,
-            final_amount = finalAmount,
-            payment_method = paymentMethod,
-            comment = comment
-        )
-
-        val response = apiService.createTransaction(request)
+    suspend fun initiateTransaction(saveTransactionRequest: SaveTransactionRequest): TransactionsInitiateResponse = withContext(Dispatchers.IO) {
+        val response = apiService.initiateTransaction(saveTransactionRequest)
 
         if (response.isSuccessful) {
             val apiResponse = response.body() ?: throw Exception("Empty response body")
             return@withContext apiResponse
         } else {
-            throw Exception("Send OTP failed: ${response.message()}")
+            throw Exception("Coupon Validation failed: ${response.message()}")
         }
     }
+  suspend fun updateTransaction(transactionId: String, saveTransactionRequest: SaveTransactionRequest): UpdateTransactionResponse = withContext(Dispatchers.IO) {
+        val response = apiService.updateTransaction(transactionId,saveTransactionRequest)
+
+        if (response.isSuccessful) {
+            val apiResponse = response.body() ?: throw Exception("Empty response body")
+            return@withContext apiResponse
+        } else {
+            throw Exception("Coupon Validation failed: ${response.message()}")
+        }
+    }
+
+
 
 
 }

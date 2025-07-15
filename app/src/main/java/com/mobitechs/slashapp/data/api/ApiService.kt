@@ -1,17 +1,17 @@
 package com.mobitechs.slashapp.data.api
 
 import com.mobitechs.slashapp.data.model.CategoryListResponse
-import com.mobitechs.slashapp.data.model.CouponResponse
 import com.mobitechs.slashapp.data.model.CouponValidationResponse
-import com.mobitechs.slashapp.data.model.CreateTransactionRequest
 import com.mobitechs.slashapp.data.model.OTPVerifyResponse
 import com.mobitechs.slashapp.data.model.ProfileResponse
 import com.mobitechs.slashapp.data.model.RegisterUserRequest
+import com.mobitechs.slashapp.data.model.SaveTransactionRequest
 import com.mobitechs.slashapp.data.model.SendOTPResponse
 import com.mobitechs.slashapp.data.model.SendOtpRequest
 import com.mobitechs.slashapp.data.model.StoreListResponse
 import com.mobitechs.slashapp.data.model.StoreResponse
 import com.mobitechs.slashapp.data.model.TransactionsInitiateResponse
+import com.mobitechs.slashapp.data.model.UpdateTransactionResponse
 import com.mobitechs.slashapp.data.model.ValidateCouponRequest
 import com.mobitechs.slashapp.data.model.VerifyOtpRequest
 import retrofit2.Response
@@ -62,8 +62,15 @@ interface ApiService {
     @POST("coupons/validateCoupon")
     suspend fun validateCoupon(@Body request: ValidateCouponRequest): Response<CouponValidationResponse>
 
-    @POST("transaction/create")
-    suspend fun createTransaction(@Body request: CreateTransactionRequest): Response<TransactionsInitiateResponse>
+
+    @POST("transactions/initiate")
+    suspend fun initiateTransaction(@Body request: SaveTransactionRequest): Response<TransactionsInitiateResponse>
+
+    @POST("transactions/{transactionId}/complete")
+    suspend fun updateTransaction(
+        @Path("transactionId") transactionId: String,
+        @Body request: SaveTransactionRequest
+    ): Response<UpdateTransactionResponse>
 
 
 }

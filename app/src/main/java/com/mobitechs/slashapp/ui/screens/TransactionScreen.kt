@@ -1,5 +1,11 @@
+// TransactionScreen.kt
 package com.mobitechs.slashapp.ui.screens
 
+import android.app.Activity
+import androidx.activity.compose.LocalActivity
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -9,6 +15,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -17,6 +24,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
@@ -27,6 +35,7 @@ import androidx.compose.material.icons.filled.LocalOffer
 import androidx.compose.material.icons.filled.Percent
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Wallet
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -43,6 +52,7 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -67,6 +77,8 @@ import com.mobitechs.slashapp.ui.components.SlashTopAppBar
 import com.mobitechs.slashapp.ui.theme.SlashColors
 import com.mobitechs.slashapp.ui.viewmodels.ToastObserver
 import com.mobitechs.slashapp.ui.viewmodels.TransactionViewModel
+import com.mobitechs.slashapp.utils.PersonalUPIPaymentManager
+import com.mobitechs.slashapp.utils.UPIApp
 import com.mobitechs.slashapp.utils.formatDecimalString
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -78,15 +90,67 @@ fun TransactionScreen(
     onBackClick: () -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    val activity = LocalActivity.current
+
+    // Check if activity is null
+    if (activity == null) {
+        Box(
+            modifier = Modifier.fillMaxSize(),
+            contentAlignment = Alignment.Center
+        ) {
+            Text("Error: Activity not available")
+        }
+        return
+    }
 
     // Observe toast events
     ToastObserver(viewModel = viewModel)
+
+    // UPI Payment launcher
+    val upiPaymentLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+//        val upiPaymentManager = UPIPaymentManager(activity)
+        val upiPaymentManager = PersonalUPIPaymentManager(activity)
+        val paymentResult = if (result.resultCode == Activity.RESULT_OK) {
+            upiPaymentManager.parseUPIResponse(result.data)
+        } else {
+            upiPaymentManager.parseUPIResponse(null)
+        }
+        viewModel.handleUPIPaymentResult(paymentResult)
+    }
 
     LaunchedEffect(storeId) {
         viewModel.loadStoreDetails(storeId)
     }
 
-    // Handle navigation to payment
+    // Load UPI apps when dialog should be shown
+    LaunchedEffect(uiState.showUPIAppsDialog) {
+        if (uiState.showUPIAppsDialog && uiState.availableUPIApps.isEmpty()) {
+            viewModel.loadUPIApps(activity)
+        }
+    }
+
+    // Handle UPI payment launch
+    LaunchedEffect(uiState.launchUPIPayment) {
+        uiState.launchUPIPayment?.let { paymentRequest ->
+            try {
+//                val upiPaymentManager = UPIPaymentManager(activity)
+                val upiPaymentManager = PersonalUPIPaymentManager(activity)
+                upiPaymentManager.launchUPIPayment(
+                    activity = activity,
+                    paymentRequest = paymentRequest,
+                    launcher = upiPaymentLauncher
+                )
+                viewModel.onUPIPaymentLaunched()
+            } catch (e: Exception) {
+                viewModel.showToast("Failed to launch UPI payment: ${e.message}")
+                viewModel.onUPIPaymentLaunched()
+            }
+        }
+    }
+
+    // Handle navigation to payment success
     LaunchedEffect(uiState.navigateToPayment) {
         if (uiState.navigateToPayment) {
             navController.navigate(Screen.HomeScreen.route) {
@@ -183,19 +247,83 @@ fun TransactionScreen(
                 }
             }
 
-            // Pay Button
+            // Pay Button Section
             Surface(
-                modifier = Modifier.fillMaxWidth().padding(bottom = 40.dp),
+                modifier = Modifier.fillMaxWidth(),
                 color = Color.White,
                 shadowElevation = 8.dp
             ) {
                 Column(
                     modifier = Modifier.padding(16.dp)
                 ) {
+                    // Payment processing indicator
+                    if (uiState.isPaymentProcessing) {
+                        Card(
+                            modifier = Modifier.fillMaxWidth(),
+                            colors = CardDefaults.cardColors(containerColor = SlashColors.Primary.copy(alpha = 0.1f)),
+                            shape = RoundedCornerShape(8.dp)
+                        ) {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(12.dp),
+                                horizontalArrangement = Arrangement.Center,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                CircularProgressIndicator(
+                                    modifier = Modifier.size(20.dp),
+                                    color = SlashColors.Primary,
+                                    strokeWidth = 2.dp
+                                )
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text(
+                                    text = "Processing payment...",
+                                    fontSize = 14.sp,
+                                    fontWeight = FontWeight.Medium,
+                                    color = SlashColors.Primary
+                                )
+                            }
+                        }
+                        Spacer(modifier = Modifier.height(12.dp))
+                    }
+
+                    // Payment error
+                    if (uiState.paymentError.isNotEmpty()) {
+                        Card(
+                            modifier = Modifier.fillMaxWidth(),
+                            colors = CardDefaults.cardColors(containerColor = SlashColors.InputBorderError.copy(alpha = 0.1f)),
+                            shape = RoundedCornerShape(8.dp)
+                        ) {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(12.dp),
+                                horizontalArrangement = Arrangement.Center,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Close,
+                                    contentDescription = null,
+                                    tint = SlashColors.InputBorderError,
+                                    modifier = Modifier.size(20.dp)
+                                )
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text(
+                                    text = uiState.paymentError,
+                                    fontSize = 14.sp,
+                                    fontWeight = FontWeight.Medium,
+                                    color = SlashColors.InputBorderError
+                                )
+                            }
+                        }
+                        Spacer(modifier = Modifier.height(12.dp))
+                    }
+
+                    // Total savings indicator
                     if (uiState.totalSavings > 0) {
                         Card(
                             modifier = Modifier.fillMaxWidth(),
-                            colors = CardDefaults.cardColors(containerColor = SlashColors.SuccessGreen.copy(alpha = 0.1f)),
+                            colors = CardDefaults.cardColors(containerColor = SlashColors.Primary.copy(alpha = 0.1f)),
                             shape = RoundedCornerShape(8.dp)
                         ) {
                             Row(
@@ -208,7 +336,7 @@ fun TransactionScreen(
                                 Icon(
                                     imageVector = Icons.Default.LocalOffer,
                                     contentDescription = null,
-                                    tint = SlashColors.SuccessGreen,
+                                    tint = SlashColors.Primary,
                                     modifier = Modifier.size(20.dp)
                                 )
                                 Spacer(modifier = Modifier.width(8.dp))
@@ -216,26 +344,56 @@ fun TransactionScreen(
                                     text = "🎉 You're saving ₹${String.format("%.2f", uiState.totalSavings)} on this order!",
                                     fontSize = 14.sp,
                                     fontWeight = FontWeight.Medium,
-                                    color = SlashColors.SuccessGreen
+                                    color = SlashColors.Primary
                                 )
                             }
                         }
                         Spacer(modifier = Modifier.height(12.dp))
                     }
 
+                    // Pay Button
                     SlashButton(
-                        text = "PAY ₹${String.format("%.2f", uiState.grandTotal)}",
-                        onClick = viewModel::processPayment,
-                        isLoading = uiState.isLoading,
+                        text = if (uiState.isPaymentProcessing) {
+                            "Processing..."
+                        } else {
+                            "PAY ₹${String.format("%.2f", uiState.grandTotal)} via UPI"
+                        },
+                        onClick = viewModel::initiateUPIPayment,
+                        isLoading = uiState.isPaymentProcessing,
                         enabled = uiState.isPayButtonEnabled,
                         modifier = Modifier.fillMaxWidth()
                     )
+
+                    // UPI info text
+                    if (!uiState.isPaymentProcessing) {
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(
+                            text = "You'll be redirected to your UPI app to complete the payment",
+                            fontSize = 12.sp,
+                            color = SlashColors.TextHint,
+                            textAlign = TextAlign.Center,
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                    }
                 }
             }
         }
 
-        // Loading overlay
-        LoadingOverlay(isVisible = uiState.isLoading)
+        // UPI Apps Selection Dialog
+        if (uiState.showUPIAppsDialog) {
+            UPIAppsSelectionDialog(
+                upiApps = uiState.availableUPIApps,
+                onAppSelected = { selectedApp ->
+                    viewModel.launchUPIPaymentWithApp(selectedApp)
+                },
+                onDismiss = {
+                    viewModel.dismissUPIAppsDialog()
+                }
+            )
+        }
+
+        // Loading overlay for other operations
+        LoadingOverlay(isVisible = uiState.isLoading && !uiState.isPaymentProcessing)
 
         // Error handling
         if (uiState.error.isNotEmpty()) {
@@ -249,6 +407,87 @@ fun TransactionScreen(
 }
 
 @Composable
+private fun UPIAppsSelectionDialog(
+    upiApps: List<UPIApp>,
+    onAppSelected: (UPIApp) -> Unit,
+    onDismiss: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    if (upiApps.isNotEmpty()) {
+        AlertDialog(
+            onDismissRequest = onDismiss,
+            title = {
+                Text(
+                    text = "Select UPI App",
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.Bold
+                )
+            },
+            text = {
+                LazyColumn {
+                    items(upiApps) { upiApp ->
+                        Card(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 4.dp)
+                                .clickable { onAppSelected(upiApp) },
+                            colors = CardDefaults.cardColors(containerColor = Color.White),
+                            border = BorderStroke(1.dp, Color.Gray.copy(alpha = 0.3f))
+                        ) {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(12.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                UPIAppIcon(
+                                    upiApp = upiApp,
+                                    modifier = Modifier.size(40.dp)
+                                )
+                                Spacer(modifier = Modifier.width(12.dp))
+                                Text(
+                                    text = upiApp.appName,
+                                    fontSize = 16.sp,
+                                    fontWeight = FontWeight.Medium
+                                )
+                            }
+                        }
+                    }
+                }
+            },
+            confirmButton = {},
+            dismissButton = {
+                TextButton(onClick = onDismiss) {
+                    Text("Cancel")
+                }
+            }
+        )
+    }
+}
+
+@Composable
+private fun UPIAppIcon(
+    upiApp: UPIApp,
+    modifier: Modifier = Modifier
+) {
+    Box(
+        modifier = modifier
+            .background(
+                color = SlashColors.Primary.copy(alpha = 0.1f),
+                shape = RoundedCornerShape(8.dp)
+            ),
+        contentAlignment = Alignment.Center
+    ) {
+        Text(
+            text = upiApp.appName.take(2).uppercase(),
+            fontSize = 14.sp,
+            fontWeight = FontWeight.Bold,
+            color = SlashColors.Primary
+        )
+    }
+}
+
+@Composable
 private fun StoreDetailsCard(
     store: StoreListItem,
     modifier: Modifier = Modifier
@@ -256,7 +495,7 @@ private fun StoreDetailsCard(
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .background(SlashColors.OrangeBg)
+            .background(SlashColors.Background)
     ) {
         Column(
             modifier = Modifier
@@ -307,7 +546,7 @@ private fun StoreDetailsCard(
                                 .drawBehind {
                                     val pathEffect = PathEffect.dashPathEffect(floatArrayOf(10f, 10f), 0f)
                                     drawLine(
-                                        color = SlashColors.DottedLineColor,
+                                        color = SlashColors.InputBorder,
                                         start = Offset(0f, 0f),
                                         end = Offset(size.width, 0f),
                                         pathEffect = pathEffect,
@@ -339,7 +578,7 @@ private fun StoreDetailsCard(
                 }
 
                 Image(
-                    painter = painterResource(id = R.drawable.bags),
+                    painter = painterResource(id = R.drawable.logo),
                     contentDescription = null,
                     modifier = Modifier.size(100.dp)
                 )
@@ -697,7 +936,7 @@ private fun CouponSection(
             if (isApplied && appliedCouponDetails.isNotEmpty()) {
                 Card(
                     modifier = Modifier.fillMaxWidth(),
-                    colors = CardDefaults.cardColors(containerColor = SlashColors.SuccessGreen.copy(alpha = 0.1f)),
+                    colors = CardDefaults.cardColors(containerColor = SlashColors.Primary.copy(alpha = 0.1f)),
                     shape = RoundedCornerShape(8.dp)
                 ) {
                     Row(
@@ -714,7 +953,7 @@ private fun CouponSection(
                                 Icon(
                                     imageVector = Icons.Default.Check,
                                     contentDescription = null,
-                                    tint = SlashColors.SuccessGreen,
+                                    tint = SlashColors.Primary,
                                     modifier = Modifier.size(16.dp)
                                 )
                                 Spacer(modifier = Modifier.width(4.dp))
@@ -722,7 +961,7 @@ private fun CouponSection(
                                     text = "Coupon Applied!",
                                     fontSize = 12.sp,
                                     fontWeight = FontWeight.Bold,
-                                    color = SlashColors.SuccessGreen
+                                    color = SlashColors.Primary
                                 )
                             }
                             Text(
@@ -734,7 +973,7 @@ private fun CouponSection(
                             Text(
                                 text = "Discount: ₹${String.format("%.2f", couponDiscount)}",
                                 fontSize = 12.sp,
-                                color = SlashColors.SuccessGreen,
+                                color = SlashColors.Primary,
                                 fontWeight = FontWeight.Medium
                             )
                         }
@@ -862,7 +1101,7 @@ private fun BillingSummarySection(
             // Discounts section
             if (vendorDiscount > 0 || cashbackUsed > 0 || couponDiscount > 0) {
                 Spacer(modifier = Modifier.height(8.dp))
-                Divider(color = SlashColors.SectionDivider)
+                Divider(color = SlashColors.InputBorder)
                 Spacer(modifier = Modifier.height(8.dp))
 
                 Text(
@@ -879,17 +1118,17 @@ private fun BillingSummarySection(
                 BillingSummaryRow(
                     "Vendor Discount",
                     "- ₹${String.format("%.2f", vendorDiscount)}",
-                    textColor = SlashColors.SuccessGreen
+                    textColor = SlashColors.Primary
                 )
             } else if (!isVendorDiscountApplicable && minimumOrderAmount > 0 && billAmount > 0) {
                 Card(
-                    colors = CardDefaults.cardColors(containerColor = SlashColors.WarningOrange.copy(alpha = 0.1f)),
+                    colors = CardDefaults.cardColors(containerColor = SlashColors.InputBorderError.copy(alpha = 0.1f)),
                     shape = RoundedCornerShape(6.dp)
                 ) {
                     Text(
                         text = "💡 Add ₹${String.format("%.2f", minimumOrderAmount - billAmount)} more to get vendor discount",
                         fontSize = 12.sp,
-                        color = SlashColors.WarningOrange,
+                        color = SlashColors.InputBorderError,
                         fontWeight = FontWeight.Medium,
                         modifier = Modifier.padding(8.dp)
                     )
@@ -901,7 +1140,7 @@ private fun BillingSummarySection(
                 BillingSummaryRow(
                     "Cashback Used",
                     "- ₹${String.format("%.2f", cashbackUsed)}",
-                    textColor = SlashColors.SuccessGreen
+                    textColor = SlashColors.Primary
                 )
             }
 
@@ -909,7 +1148,7 @@ private fun BillingSummarySection(
                 BillingSummaryRow(
                     "Coupon Discount",
                     "- ₹${String.format("%.2f", couponDiscount)}",
-                    textColor = SlashColors.SuccessGreen
+                    textColor = SlashColors.Primary
                 )
             }
 
@@ -918,7 +1157,7 @@ private fun BillingSummarySection(
                 Spacer(modifier = Modifier.height(12.dp))
                 Card(
                     modifier = Modifier.fillMaxWidth(),
-                    colors = CardDefaults.cardColors(containerColor = SlashColors.SuccessGreen.copy(alpha = 0.15f)),
+                    colors = CardDefaults.cardColors(containerColor = SlashColors.Primary.copy(alpha = 0.15f)),
                     shape = RoundedCornerShape(8.dp)
                 ) {
                     Row(
@@ -940,14 +1179,14 @@ private fun BillingSummarySection(
                                 text = "Total Savings",
                                 fontSize = 16.sp,
                                 fontWeight = FontWeight.Bold,
-                                color = SlashColors.SuccessGreen
+                                color = SlashColors.Primary
                             )
                         }
                         Text(
                             text = "₹${String.format("%.2f", totalSavings)}",
                             fontSize = 16.sp,
                             fontWeight = FontWeight.Bold,
-                            color = SlashColors.SuccessGreen
+                            color = SlashColors.Primary
                         )
                     }
                 }
@@ -1004,7 +1243,7 @@ private fun BillingSummaryRow(
                 text = value,
                 fontSize = if (isHeader) 16.sp else 14.sp,
                 color = textColor,
-                fontWeight = if (textColor == SlashColors.SuccessGreen) FontWeight.Medium else FontWeight.Normal
+                fontWeight = if (textColor == SlashColors.Primary) FontWeight.Medium else FontWeight.Normal
             )
         }
     }
