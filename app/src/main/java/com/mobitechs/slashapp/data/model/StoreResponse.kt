@@ -41,3 +41,14 @@ data class StoreListItem(
     val transaction_count: Int?
 )
 
+
+data class AddStoreReviewResponse(
+    val success: Boolean,
+    val message: String,
+    val data: AddStoreReviewResponseId,
+)
+
+data class AddStoreReviewResponseId(
+    val id: Int
+)
+

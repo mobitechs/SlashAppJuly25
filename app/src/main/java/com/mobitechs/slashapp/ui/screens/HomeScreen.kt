@@ -30,16 +30,21 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Notifications
+import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -58,10 +63,12 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
+import coil.compose.AsyncImage
 import com.mobitechs.slashapp.R
+import com.mobitechs.slashapp.data.model.CategoryItem
+import com.mobitechs.slashapp.data.model.StoreListItem
 import com.mobitechs.slashapp.ui.theme.SlashColors
 import com.mobitechs.slashapp.ui.viewmodels.HomeViewModel
-
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -69,64 +76,27 @@ fun HomeScreen(
     viewModel: HomeViewModel,
     navController: NavController
 ) {
+    // Fix double API call issue by using LaunchedEffect
+    LaunchedEffect(Unit) {
+        viewModel.initializeData()
+    }
+
+    // Observe UI state
+    val uiState by viewModel.uiState.collectAsState()
+
     // State for Available Cashback vs Refer & Earn
     var selectedTab by remember { mutableStateOf(0) } // 0 = Available Cashback, 1 = Refer & Earn
 
-    // Static data - in real app, this would come from ViewModel
-    val categories = remember {
-        listOf(
-            Category("Food", R.drawable.cat_food),
-            Category("Grocery", R.drawable.cat_grocery),
-            Category("Fashion", R.drawable.cat_fashion),
-            Category("Health", R.drawable.cat_health),
-            Category("Beauty", R.drawable.cat_food),
-            Category("Electronics", R.drawable.cat_fashion)
-        )
-    }
-
+    // Static data for daily rewards (keeping this static as it's not part of the API)
     val dailyRewards = remember {
         listOf(
             DailyReward("Spin and Win","Play and win daily rewards", R.drawable.spin_win, Color(0xFFE91E63)),
-//            DailyReward("Survey", "📝", Color(0xFF2196F3)),
-//            DailyReward("Check In", "✅", Color(0xFF4CAF50))
         )
     }
-
-    val stores = remember {
-        listOf(
-            Store(
-                "ABC Store",
-                "Grocery",
-                "3 km away",
-                "₹300",
-                "7%",
-                R.drawable.store_default
-            ),
-            Store(
-                "XYZ Market",
-                "Fashion",
-                "2 km away",
-                "₹500",
-                "10%",
-                R.drawable.store_default
-            ),
-            Store(
-                "Health Plus",
-                "Health",
-                "1.5 km away",
-                "₹200",
-                "5%",
-                R.drawable.store_default
-            )
-        )
-    }
-
-
 
     Box(
         modifier = Modifier.fillMaxSize()
     ) {
-
         Box(
             modifier = Modifier
                 .fillMaxSize()
@@ -136,9 +106,7 @@ fun HomeScreen(
                             Color(0xFF4CAF50),
                             Color(0xFF66BB6A),
                             Color(0xFFFCFCFC),
-
-
-                            )
+                        )
                     )
                 )
         )
@@ -174,10 +142,13 @@ fun HomeScreen(
                         )
 
                         Spacer(modifier = Modifier.height(10.dp))
-                        // Cashback and Refer Section
+                        // Cashback and Refer Section - Now Dynamic
                         CashbackSection(
                             selectedTab = selectedTab,
                             onTabSelected = { selectedTab = it },
+                            availableCashback = uiState.availableCashback,
+                            totalEarned = uiState.totalEarned,
+                            isLoading = uiState.isUserDataLoading,
                             modifier = Modifier.padding(horizontal = 16.dp)
                         )
                     }
@@ -191,15 +162,20 @@ fun HomeScreen(
             }
 
             item {
-                // Categories Section (below background)
+                // Categories Section (below background) - Now Dynamic with Server Images
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(vertical = 16.dp)
                 ) {
                     CategoriesSection(
-                        categories = categories,
-                        modifier = Modifier // Keep as is for categories
+                        categories = uiState.categories,
+                        isLoading = uiState.isCategoriesLoading,
+                        error = uiState.categoriesError,
+                        onRetry = { viewModel.loadCategories() },
+                        onClearError = { viewModel.clearCategoriesError() },
+                        viewModel = viewModel,
+                        modifier = Modifier
                     )
                 }
             }
@@ -218,14 +194,19 @@ fun HomeScreen(
             }
 
             item {
-                // Top Stores Section with horizontal scroll
+                // Top Stores Section with horizontal scroll - Now Dynamic with Server Images
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(bottom = 16.dp)
                 ) {
                     TopStoresSection(
-                        stores = stores,
+                        stores = uiState.stores,
+                        isLoading = uiState.isStoresLoading,
+                        error = uiState.storesError,
+                        onRetry = { viewModel.loadTopStores() },
+                        onClearError = { viewModel.clearStoresError() },
+                        viewModel = viewModel,
                         modifier = Modifier.padding(start = 1.dp)
                     )
                 }
@@ -318,6 +299,9 @@ private fun TopAppBarCard(
 private fun CashbackSection(
     selectedTab: Int,
     onTabSelected: (Int) -> Unit,
+    availableCashback: String,
+    totalEarned: String,
+    isLoading: Boolean,
     modifier: Modifier = Modifier
 ) {
     Column(
@@ -351,13 +335,20 @@ private fun CashbackSection(
 
         Spacer(modifier = Modifier.height(20.dp))
 
-        // Amount display based on selected tab
-        Text(
-            text = if (selectedTab == 0) "₹3280" else "₹5550",
-            color = SlashColors.Primary,
-            fontSize = 60.sp,
-            fontWeight = FontWeight.Bold
-        )
+        // Amount display based on selected tab - Now Dynamic
+        if (isLoading) {
+            CircularProgressIndicator(
+                color = SlashColors.Primary,
+                modifier = Modifier.size(40.dp)
+            )
+        } else {
+            Text(
+                text = if (selectedTab == 0) availableCashback else totalEarned,
+                color = SlashColors.Primary,
+                fontSize = 60.sp,
+                fontWeight = FontWeight.Bold
+            )
+        }
 
         if (selectedTab == 1) {
             Text(
@@ -421,6 +412,7 @@ private fun DailyRewardsSection(
         }
     }
 }
+
 @Composable
 private fun DailyRewardCard(
     reward: DailyReward,
@@ -508,44 +500,95 @@ private fun DailyRewardCard(
 
 @Composable
 private fun CategoriesSection(
-    categories: List<Category>,
+    categories: List<CategoryItem>,
+    isLoading: Boolean,
+    error: String,
+    onRetry: () -> Unit,
+    onClearError: () -> Unit,
+    viewModel: HomeViewModel,
     modifier: Modifier = Modifier
 ) {
     Column(modifier = modifier) {
-        Text(
-            text = "Categories",
-            fontSize = 18.sp,
-            fontWeight = FontWeight.SemiBold,
-            color = SlashColors.PrimaryText,
+        Row(
             modifier = Modifier
+                .fillMaxWidth()
                 .padding(horizontal = 16.dp)
-                .padding(bottom = 12.dp)
-        )
-
-        LazyRow(
-            horizontalArrangement = Arrangement.spacedBy(16.dp), // Reduced gap from 16dp to 8dp
-            contentPadding = PaddingValues(horizontal = 16.dp)
+                .padding(bottom = 12.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            items(categories, key = { it.name }) { category ->
-                CategoryItem(category = category)
+            Text(
+                text = "Categories",
+                fontSize = 18.sp,
+                fontWeight = FontWeight.SemiBold,
+                color = SlashColors.PrimaryText
+            )
+
+            if (isLoading) {
+                CircularProgressIndicator(
+                    modifier = Modifier.size(16.dp),
+                    color = SlashColors.Primary,
+                    strokeWidth = 2.dp
+                )
+            } else if (error.isNotEmpty()) {
+                IconButton(
+                    onClick = onRetry,
+                    modifier = Modifier.size(24.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Refresh,
+                        contentDescription = "Retry",
+                        tint = SlashColors.Primary,
+                        modifier = Modifier.size(16.dp)
+                    )
+                }
+            }
+        }
+
+        when {
+            error.isNotEmpty() -> {
+                ErrorMessage(
+                    message = error,
+                    onRetry = onRetry,
+                    modifier = Modifier.padding(horizontal = 16.dp)
+                )
+            }
+            categories.isEmpty() && !isLoading -> {
+                EmptyMessage(
+                    message = "No categories available",
+                    modifier = Modifier.padding(horizontal = 16.dp)
+                )
+            }
+            else -> {
+                LazyRow(
+                    horizontalArrangement = Arrangement.spacedBy(16.dp),
+                    contentPadding = PaddingValues(horizontal = 16.dp)
+                ) {
+                    items(categories, key = { it.id }) { category ->
+                        CategoryItem(
+                            category = category,
+                            viewModel = viewModel
+                        )
+                    }
+                }
             }
         }
     }
 }
 
-
 @Composable
 private fun CategoryItem(
-    category: Category
+    category: CategoryItem,
+    viewModel: HomeViewModel
 ) {
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = Modifier
             .clickable { }
-            .width(100.dp) // Increased from 80dp to 100dp
+            .width(100.dp)
     ) {
         Surface(
-            modifier = Modifier.size(85.dp), // Increased from 60dp to 75dp
+            modifier = Modifier.size(85.dp),
             shape = RoundedCornerShape(12.dp),
             color = Color.White,
             shadowElevation = 2.dp
@@ -554,10 +597,14 @@ private fun CategoryItem(
                 contentAlignment = Alignment.Center,
                 modifier = Modifier.fillMaxSize()
             ) {
-                Image(
-                    painter = painterResource(id = category.iconRes),
+                AsyncImage(
+                    model = category.icon,
                     contentDescription = category.name,
-                    modifier = Modifier.size(60.dp) // Increased from 32dp to 40dp
+                    modifier = Modifier.size(60.dp),
+                    placeholder = painterResource(id = viewModel.getFallbackIconRes(category.name)),
+                    error = painterResource(id = viewModel.getFallbackIconRes(category.name)),
+                    fallback = painterResource(id = viewModel.getFallbackIconRes(category.name)),
+                    contentScale = ContentScale.Fit
                 )
             }
         }
@@ -593,12 +640,11 @@ private fun VIPMembershipSectionNew(
             // VIP icon/image
             Box(
                 contentAlignment = Alignment.Center,
-
             ) {
                 Image(
                     painter = painterResource(id = R.drawable.vip),
                     contentDescription = "BecomeVIP",
-                    modifier = Modifier.size(60.dp) // Increased from 32dp to 40dp
+                    modifier = Modifier.size(60.dp)
                 )
             }
             Spacer(modifier = Modifier.width(18.dp))
@@ -664,7 +710,6 @@ private fun VIPMembershipSectionNew(
                         )
                     }
                 }
-
             }
         }
     }
@@ -672,26 +717,77 @@ private fun VIPMembershipSectionNew(
 
 @Composable
 private fun TopStoresSection(
-    stores: List<Store>,
+    stores: List<StoreListItem>,
+    isLoading: Boolean,
+    error: String,
+    onRetry: () -> Unit,
+    onClearError: () -> Unit,
+    viewModel: HomeViewModel,
     modifier: Modifier = Modifier
 ) {
     Column(modifier = modifier) {
-        Text(
-            text = "Top Stores Near you",
-            fontSize = 18.sp,
-            fontWeight = FontWeight.SemiBold,
-            color = SlashColors.PrimaryText, // Changed from Color.White
+        Row(
             modifier = Modifier
+                .fillMaxWidth()
                 .padding(horizontal = 16.dp)
-                .padding(bottom = 12.dp)
-        )
-
-        LazyRow(
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
-            contentPadding = PaddingValues(horizontal = 16.dp)
+                .padding(bottom = 12.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            items(stores, key = { it.name + it.category }) { store ->
-                StoreCard(store = store)
+            Text(
+                text = "Top Stores Near you",
+                fontSize = 18.sp,
+                fontWeight = FontWeight.SemiBold,
+                color = SlashColors.PrimaryText
+            )
+
+            if (isLoading) {
+                CircularProgressIndicator(
+                    modifier = Modifier.size(16.dp),
+                    color = SlashColors.Primary,
+                    strokeWidth = 2.dp
+                )
+            } else if (error.isNotEmpty()) {
+                IconButton(
+                    onClick = onRetry,
+                    modifier = Modifier.size(24.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Refresh,
+                        contentDescription = "Retry",
+                        tint = SlashColors.Primary,
+                        modifier = Modifier.size(16.dp)
+                    )
+                }
+            }
+        }
+
+        when {
+            error.isNotEmpty() -> {
+                ErrorMessage(
+                    message = error,
+                    onRetry = onRetry,
+                    modifier = Modifier.padding(horizontal = 16.dp)
+                )
+            }
+            stores.isEmpty() && !isLoading -> {
+                EmptyMessage(
+                    message = "No stores available",
+                    modifier = Modifier.padding(horizontal = 16.dp)
+                )
+            }
+            else -> {
+                LazyRow(
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                    contentPadding = PaddingValues(horizontal = 16.dp)
+                ) {
+                    items(stores, key = { it.id }) { store ->
+                        StoreCard(
+                            store = store,
+                            viewModel = viewModel
+                        )
+                    }
+                }
             }
         }
     }
@@ -699,7 +795,8 @@ private fun TopStoresSection(
 
 @Composable
 private fun StoreCard(
-    store: Store,
+    store: StoreListItem,
+    viewModel: HomeViewModel,
     modifier: Modifier = Modifier
 ) {
     Card(
@@ -723,10 +820,12 @@ private fun StoreCard(
                 textAlign = TextAlign.Center,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(top = 16.dp, bottom = 12.dp)
+                    .padding(top = 16.dp, bottom = 12.dp),
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
             )
 
-            // Store Image with no padding from start and end
+            // Store Image with server loading
             Surface(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -737,15 +836,17 @@ private fun StoreCard(
                     contentAlignment = Alignment.Center,
                     modifier = Modifier.fillMaxSize()
                 ) {
-                    Image(
-                        painter = painterResource(id = store.imageRes),
+                    AsyncImage(
+                        model = store.logo ?: store.banner_image,
                         contentDescription = store.name,
-                        contentScale = ContentScale.Fit
+                        contentScale = ContentScale.Fit,
+                        placeholder = painterResource(id = R.drawable.store_default),
+                        error = painterResource(id = R.drawable.store_default),
+                        fallback = painterResource(id = R.drawable.store_default),
+                        modifier = Modifier.fillMaxSize()
                     )
                 }
             }
-
-
 
             // Distance section with white background and no padding from start and end
             Surface(
@@ -753,7 +854,7 @@ private fun StoreCard(
                 color = SlashColors.StoreCardWhiteSection
             ) {
                 Text(
-                    text = "Distance - ${store.distance}",
+                    text = "Distance - ${viewModel.calculateDistance(store.latitude, store.longitude)}",
                     fontSize = 12.sp,
                     color = SlashColors.DistanceText,
                     textAlign = TextAlign.Center,
@@ -769,12 +870,14 @@ private fun StoreCard(
                 verticalArrangement = Arrangement.spacedBy(4.dp)
             ) {
                 Text(
-                    text = "Category - ${store.category}",
+                    text = "Category - ${store.category_name}",
                     fontSize = 12.sp,
-                    color = SlashColors.CategoryText
+                    color = SlashColors.CategoryText,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
                 )
                 Text(
-                    text = "Minimum Order - ${store.minimumOrder}",
+                    text = "Minimum Order - ₹${store.minimum_order_amount}",
                     fontSize = 12.sp,
                     color = SlashColors.CategoryText
                 )
@@ -787,7 +890,7 @@ private fun StoreCard(
                         color = SlashColors.VipDiscountRed
                     )
                     Text(
-                        text = store.vipDiscount,
+                        text = "${store.vip_discount_percentage}%",
                         fontSize = 12.sp,
                         color = SlashColors.DiscountRed,
                         fontWeight = FontWeight.Medium
@@ -802,7 +905,7 @@ private fun StoreCard(
                         color = SlashColors.CategoryText
                     )
                     Text(
-                        text = "7%",
+                        text = "${store.normal_discount_percentage}%",
                         fontSize = 12.sp,
                         color = SlashColors.CategoryText,
                         fontWeight = FontWeight.Medium
@@ -813,7 +916,63 @@ private fun StoreCard(
     }
 }
 
-// Data classes
+@Composable
+private fun ErrorMessage(
+    message: String,
+    onRetry: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Card(
+        modifier = modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(containerColor = Color.Red.copy(alpha = 0.1f)),
+        shape = RoundedCornerShape(8.dp)
+    ) {
+        Column(
+            modifier = Modifier.padding(16.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Text(
+                text = message,
+                color = Color.Red,
+                fontSize = 14.sp,
+                textAlign = TextAlign.Center
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            Button(
+                onClick = onRetry,
+                colors = ButtonDefaults.buttonColors(containerColor = SlashColors.Primary),
+                modifier = Modifier.height(32.dp)
+            ) {
+                Text(
+                    text = "Retry",
+                    fontSize = 12.sp
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun EmptyMessage(
+    message: String,
+    modifier: Modifier = Modifier
+) {
+    Box(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(32.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        Text(
+            text = message,
+            color = SlashColors.SecondaryText,
+            fontSize = 14.sp,
+            textAlign = TextAlign.Center
+        )
+    }
+}
+
+// Data classes - keeping the existing ones for UI compatibility
 data class Category(
     val name: String,
     val iconRes: Int
@@ -834,4 +993,3 @@ data class DailyReward(
     val iconRes: Int,
     val color: Color
 )
-

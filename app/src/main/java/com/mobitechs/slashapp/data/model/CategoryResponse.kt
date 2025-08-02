@@ -10,7 +10,7 @@ data class CategoryItem(
     val name: String,
     val icon: String?,
     val display_order: Int,
-    val is_active: Boolean,
+    val is_active: Int,
     val created_at: String,
     val updated_at: String
 )

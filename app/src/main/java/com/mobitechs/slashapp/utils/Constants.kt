@@ -4,6 +4,7 @@ package com.mobitechs.slashapp.utils
 
 object Constants {
     // API related
+//    const val Figma Link = "https://www.figma.com/design/O5wmNg2YFANLU6suNWYnzx/Slash-App?node-id=107-472&p=f&t=G0j6VTO2BJvoT8RX-0"
 //    const val BASE_URL = "https://mobitechs.in/mobitech_laravel_classmate/public/api/"
 //    const val BASE_URL = "https://slash-node-api.onrender.com/"
 //    const val BASE_URL = "http://localhost:3000/api/v1/"

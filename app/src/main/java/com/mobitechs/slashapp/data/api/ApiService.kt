@@ -1,7 +1,10 @@
 package com.mobitechs.slashapp.data.api
 
+import com.mobitechs.slashapp.data.model.AddStoreReviewRequest
+import com.mobitechs.slashapp.data.model.AddStoreReviewResponse
 import com.mobitechs.slashapp.data.model.CategoryListResponse
 import com.mobitechs.slashapp.data.model.CouponValidationResponse
+import com.mobitechs.slashapp.data.model.MyTransactionListResponse
 import com.mobitechs.slashapp.data.model.OTPVerifyResponse
 import com.mobitechs.slashapp.data.model.ProfileResponse
 import com.mobitechs.slashapp.data.model.RegisterUserRequest
@@ -10,6 +13,7 @@ import com.mobitechs.slashapp.data.model.SendOTPResponse
 import com.mobitechs.slashapp.data.model.SendOtpRequest
 import com.mobitechs.slashapp.data.model.StoreListResponse
 import com.mobitechs.slashapp.data.model.StoreResponse
+import com.mobitechs.slashapp.data.model.TransactionStatsResponse
 import com.mobitechs.slashapp.data.model.TransactionsInitiateResponse
 import com.mobitechs.slashapp.data.model.UpdateTransactionResponse
 import com.mobitechs.slashapp.data.model.ValidateCouponRequest
@@ -36,27 +40,47 @@ interface ApiService {
     suspend fun getUserDetails(): Response<ProfileResponse>
 
     // Store endpoints------------------------------------------------------------------------------------------
-    @GET("store/categories")
+    @GET("stores/categories")
     suspend fun getCategoryList(): Response<CategoryListResponse>
 
-    @GET("store/topStore")
+    @GET("stores/top-sequence")
     suspend fun getTopStoreList(): Response<StoreListResponse>
 
     @GET("stores")
-    suspend fun getStoreList(
+    suspend fun getAllStoreList(
         @Query("page") page: String,
         @Query("limit") limit: String
     ): Response<StoreListResponse>
 
-    @GET("store/categoryWiseStore/{categoryId}")
+
+    @GET("stores")
     suspend fun getCategoryWiseStoreList(
-        @Path("categoryId") categoryId: String
+        @Query("categoryId") categoryId: String,
+        @Query("page") page: String,
+        @Query("limit") limit: String
     ): Response<StoreListResponse>
+
+    @GET("stores")
+    suspend fun getSearchWiseStoreList(
+        @Query("query") query: String,
+        @Query("page") page: String,
+        @Query("limit") limit: String
+    ): Response<StoreListResponse>
+
+
+    @GET("stores/search?q=")
+    suspend fun getSearchWiseStoreList2( @Query("query") storeId: String): Response<StoreListResponse>
+
+    @GET("stores/favorites")
+    suspend fun getFavouriteStoreList(): Response<StoreListResponse>
 
     @GET("stores/{storeId}")
     suspend fun getStoreDetails(
         @Path("storeId") storeId: String
     ): Response<StoreResponse>
+
+    @POST("stores/{storeId}}/reviews")
+    suspend fun addStoreReview( @Path("storeId") storeId: String,@Body request: AddStoreReviewRequest): Response<AddStoreReviewResponse>
 
 
     @POST("coupons/validateCoupon")
@@ -71,6 +95,19 @@ interface ApiService {
         @Path("transactionId") transactionId: String,
         @Body request: SaveTransactionRequest
     ): Response<UpdateTransactionResponse>
+
+
+
+    @GET("transactions")
+    suspend fun getMyTransactionList(
+        @Query("page") page: String,
+        @Query("limit") limit: String
+    ): Response<MyTransactionListResponse>
+
+
+    @GET("transactions/stats")
+    suspend fun getTransactionStats(): Response<TransactionStatsResponse>
+
 
 
 }

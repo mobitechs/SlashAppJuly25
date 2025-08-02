@@ -4,7 +4,11 @@ import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import com.mobitechs.slashapp.data.repository.AuthRepository
+import com.mobitechs.slashapp.data.repository.HomeRepository
 import com.mobitechs.slashapp.data.repository.QRScannerRepository
+import com.mobitechs.slashapp.data.repository.RewardsRepository
+import com.mobitechs.slashapp.data.repository.StoreRepository
+import com.mobitechs.slashapp.data.repository.TransactionRepository
 import com.mobitechs.slashapp.ui.viewmodels.AuthOtpVerificationViewModel
 import com.mobitechs.slashapp.ui.viewmodels.AuthPhoneViewModel
 import com.mobitechs.slashapp.ui.viewmodels.AuthRegisterViewModel
@@ -24,6 +28,10 @@ class ViewModelFactory(
     private val context: Context,
     private val authRepository: AuthRepository,
     private val qRScannerRepository: QRScannerRepository,
+    private val homeRepository: HomeRepository,
+    private val rewardsRepository: RewardsRepository,
+    private val storeRepository: StoreRepository,
+    private val transactionRepository: TransactionRepository,
 ) : ViewModelProvider.Factory {
 
 
@@ -45,7 +53,7 @@ class ViewModelFactory(
                 AuthRegisterViewModel(authRepository) as T
             }
             modelClass.isAssignableFrom(HomeViewModel::class.java) -> {
-                HomeViewModel() as T
+                HomeViewModel(homeRepository,authRepository) as T
             }
 
             modelClass.isAssignableFrom(BottomMenuTransactionViewModel::class.java) -> {

@@ -9,7 +9,11 @@ import com.mobitechs.slashapp.data.api.AuthInterceptor
 import com.mobitechs.slashapp.data.api.RetrofitClient
 import com.mobitechs.slashapp.data.local.SharedPrefsManager
 import com.mobitechs.slashapp.data.repository.AuthRepository
+import com.mobitechs.slashapp.data.repository.HomeRepository
 import com.mobitechs.slashapp.data.repository.QRScannerRepository
+import com.mobitechs.slashapp.data.repository.RewardsRepository
+import com.mobitechs.slashapp.data.repository.StoreRepository
+import com.mobitechs.slashapp.data.repository.TransactionRepository
 import com.razorpay.Checkout
 
 class SlashApp : Application() {
@@ -33,6 +37,10 @@ class SlashApp : Application() {
 
     val authRepository by lazy { AuthRepository(apiService, sharedPrefsManager) }
     val qRScannerRepository by lazy { QRScannerRepository(apiService, sharedPrefsManager) }
+    val homeRepository by lazy { HomeRepository(apiService, sharedPrefsManager) }
+    val rewardsRepository by lazy { RewardsRepository(apiService, sharedPrefsManager) }
+    val storeRepository by lazy { StoreRepository(apiService, sharedPrefsManager) }
+    val transactionRepository by lazy { TransactionRepository(apiService, sharedPrefsManager) }
 
 
     override fun onCreate() {

@@ -36,3 +36,10 @@ data class CreateTransactionRequest(
     val payment_method: String,
     val comment: String?
 )
+
+
+data class AddStoreReviewRequest(
+    val rating: String,
+    val title: String,
+    val description: String
+)

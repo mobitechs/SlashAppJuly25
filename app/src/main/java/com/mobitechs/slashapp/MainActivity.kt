@@ -56,6 +56,10 @@ class MainActivity : ComponentActivity() {
             applicationContext,
             app.authRepository,
             app.qRScannerRepository,
+            app.homeRepository,
+            app.rewardsRepository,
+            app.storeRepository,
+            app.transactionRepository,
         )
 
         setContent {
