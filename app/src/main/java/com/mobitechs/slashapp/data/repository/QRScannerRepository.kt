@@ -20,7 +20,7 @@ class QRScannerRepository(
 ) {
 
     suspend fun getStoreDetails(storeId: Int): StoreResponse = withContext(Dispatchers.IO) {
-        val response = apiService.getStoreDetails(storeId.toString())
+        val response = apiService.getStoreWiseDetails(storeId.toString())
 
         if (response.isSuccessful) {
             val apiResponse = response.body() ?: throw Exception("Empty response body")

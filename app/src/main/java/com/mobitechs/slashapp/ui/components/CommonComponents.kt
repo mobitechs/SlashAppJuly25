@@ -1,22 +1,45 @@
 package com.mobitechs.slashapp.ui.components
+
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.ArrowBackIosNew
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Checkbox
+import androidx.compose.material3.CheckboxDefaults
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.buildAnnotatedString
@@ -24,12 +47,16 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import coil.compose.AsyncImage
+import com.mobitechs.slashapp.R
+import com.mobitechs.slashapp.data.model.CategoryItem
+import com.mobitechs.slashapp.data.model.StoreListItem
 import com.mobitechs.slashapp.ui.theme.SlashColors
 import com.mobitechs.slashapp.utils.ValidationResult
-
 
 @Composable
 fun SlashButton(
@@ -174,7 +201,7 @@ fun PhoneNumberInputField(
 
 @Composable
 fun RegularSmallText(
-    title : String,
+    title: String,
     modifier: Modifier = Modifier
 ) {
     Text(
@@ -188,7 +215,7 @@ fun RegularSmallText(
 
 @Composable
 fun RegularMediumText(
-    title : String,
+    title: String,
     modifier: Modifier = Modifier
 ) {
     Text(
@@ -202,7 +229,7 @@ fun RegularMediumText(
 
 @Composable
 fun RegularLargeText(
-    title : String,
+    title: String,
     modifier: Modifier = Modifier
 ) {
     Text(
@@ -495,7 +522,7 @@ fun OtpInputField(
                                 else -> SlashColors.TextPrimary
                             },
 
-                        )
+                            )
                     )
                 }
             }
@@ -591,4 +618,380 @@ fun LoadingOverlay(
             }
         }
     }
+}
+
+
+/**
+ * Common CategoryItem component that can be reused across different screens
+ */
+@Composable
+fun CommonCategoryItem(
+    category: CategoryItem,
+    isSelected: Boolean = false,
+    onSelected: (() -> Unit)? = null,
+    getFallbackIconRes: (String) -> Int,
+    modifier: Modifier = Modifier,
+    size: CategoryItemSize = CategoryItemSize.Large
+) {
+    val itemWidth = when (size) {
+        CategoryItemSize.Small -> 70.dp
+        CategoryItemSize.Large -> 100.dp
+    }
+
+    val iconSize = when (size) {
+        CategoryItemSize.Small -> 30.dp
+        CategoryItemSize.Large -> 60.dp
+    }
+
+    val surfaceSize = when (size) {
+        CategoryItemSize.Small -> 50.dp
+        CategoryItemSize.Large -> 85.dp
+    }
+
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = modifier
+            .then(
+                if (onSelected != null) {
+                    Modifier.clickable { onSelected() }
+                } else {
+                    Modifier
+                }
+            )
+            .width(itemWidth)
+    ) {
+        Surface(
+            modifier = Modifier
+                .size(surfaceSize)
+                .then(
+                    if (isSelected && size == CategoryItemSize.Small) {
+                        Modifier.border(2.dp, SlashColors.Primary, CircleShape)
+                    } else {
+                        Modifier
+                    }
+                ),
+            shape = when (size) {
+                CategoryItemSize.Small -> CircleShape
+                CategoryItemSize.Large -> RoundedCornerShape(12.dp)
+            },
+            color = if (isSelected && size == CategoryItemSize.Small)
+                SlashColors.Primary.copy(alpha = 0.1f) else Color.White,
+            shadowElevation = if (isSelected) 4.dp else 2.dp
+        ) {
+            Box(
+                contentAlignment = Alignment.Center,
+                modifier = Modifier.fillMaxSize()
+            ) {
+                if (category.name == "All") {
+                    Icon(
+                        painter = painterResource(id = getFallbackIconRes(category.name)),
+                        contentDescription = category.name,
+                        modifier = Modifier.size(iconSize),
+                        tint = if (isSelected && size == CategoryItemSize.Small)
+                            SlashColors.Primary else SlashColors.SecondaryText
+                    )
+                } else {
+                    AsyncImage(
+                        model = category.icon,
+                        contentDescription = category.name,
+                        modifier = Modifier.size(iconSize),
+                        placeholder = painterResource(id = getFallbackIconRes(category.name)),
+                        error = painterResource(id = getFallbackIconRes(category.name)),
+                        fallback = painterResource(id = getFallbackIconRes(category.name)),
+                        contentScale = ContentScale.Fit
+                    )
+                }
+            }
+        }
+        Spacer(modifier = Modifier.height(8.dp))
+        Text(
+            text = category.name,
+            fontSize = when (size) {
+                CategoryItemSize.Small -> 10.sp
+                CategoryItemSize.Large -> 12.sp
+            },
+            fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Medium,
+            color = if (isSelected && size == CategoryItemSize.Small)
+                SlashColors.Primary else SlashColors.SecondaryText,
+            textAlign = TextAlign.Center,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis
+        )
+    }
+}
+
+/**
+ * Common StoreCard component for horizontal display (like in HomeScreen)
+ */
+@Composable
+fun CommonStoreCardHorizontal(
+    store: StoreListItem,
+    calculateDistance: (String?, String?) -> String,
+    onStoreClick: (() -> Unit)? = null,
+    modifier: Modifier = Modifier
+) {
+    Card(
+        modifier = modifier
+            .width(200.dp)
+            .then(
+                if (onStoreClick != null) {
+                    Modifier.clickable { onStoreClick() }
+                } else {
+                    Modifier
+                }
+            ),
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(containerColor = SlashColors.StoreCardBackground),
+        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+    ) {
+        Column(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            // Store Name
+            Text(
+                text = store.name,
+                fontSize = 16.sp,
+                fontWeight = FontWeight.SemiBold,
+                color = SlashColors.PrimaryText,
+                textAlign = TextAlign.Center,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 16.dp, bottom = 12.dp),
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
+
+            // Store Image
+            Surface(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(120.dp),
+                color = SlashColors.StoreImageBackground
+            ) {
+                Box(
+                    contentAlignment = Alignment.Center,
+                    modifier = Modifier.fillMaxSize()
+                ) {
+                    AsyncImage(
+                        model = store.logo ?: store.banner_image,
+                        contentDescription = store.name,
+                        contentScale = ContentScale.Fit,
+                        placeholder = painterResource(id = R.drawable.store_default),
+                        error = painterResource(id = R.drawable.store_default),
+                        fallback = painterResource(id = R.drawable.store_default),
+                        modifier = Modifier.fillMaxSize()
+                    )
+                }
+            }
+
+            // Distance section
+            Surface(
+                modifier = Modifier.fillMaxWidth(),
+                color = SlashColors.StoreCardWhiteSection
+            ) {
+                Text(
+                    text = "Distance - ${calculateDistance(store.latitude, store.longitude)}",
+                    fontSize = 12.sp,
+                    color = SlashColors.DistanceText,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.padding(vertical = 8.dp)
+                )
+            }
+
+            // Store details
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(12.dp),
+                verticalArrangement = Arrangement.spacedBy(4.dp)
+            ) {
+                Text(
+                    text = "Category - ${store.category_name}",
+                    fontSize = 12.sp,
+                    color = SlashColors.CategoryText,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+                Text(
+                    text = "Minimum Order - ₹${store.minimum_order_amount}",
+                    fontSize = 12.sp,
+                    color = SlashColors.CategoryText
+                )
+                Row(
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = "VIP Disc - ",
+                        fontSize = 12.sp,
+                        color = SlashColors.VipDiscountRed
+                    )
+                    Text(
+                        text = "${store.vip_discount_percentage}%",
+                        fontSize = 12.sp,
+                        color = SlashColors.DiscountRed,
+                        fontWeight = FontWeight.Medium
+                    )
+                }
+                Row(
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = "Discount - ",
+                        fontSize = 12.sp,
+                        color = SlashColors.CategoryText
+                    )
+                    Text(
+                        text = "${store.normal_discount_percentage}%",
+                        fontSize = 12.sp,
+                        color = SlashColors.CategoryText,
+                        fontWeight = FontWeight.Medium
+                    )
+                }
+            }
+        }
+    }
+}
+
+/**
+ * Common StoreCard component for vertical display (like in StoreListScreen)
+ */
+@Composable
+fun CommonStoreCardVertical(
+    store: StoreListItem,
+    calculateDistance: (String?, String?) -> String,
+    onStoreClick: (() -> Unit)? = null,
+    modifier: Modifier = Modifier
+) {
+    Card(
+        modifier = modifier
+            .then(
+                if (onStoreClick != null) {
+                    Modifier.clickable { onStoreClick() }
+                } else {
+                    Modifier
+                }
+            ),
+        shape = RoundedCornerShape(12.dp),
+        colors = CardDefaults.cardColors(containerColor = Color.White),
+        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(12.dp)
+        ) {
+            // Store Image
+            Surface(
+                modifier = Modifier.size(80.dp),
+                shape = RoundedCornerShape(8.dp),
+                color = SlashColors.StoreImageBackground
+            ) {
+                AsyncImage(
+                    model = store.logo ?: store.banner_image,
+                    contentDescription = store.name,
+                    contentScale = ContentScale.Crop,
+                    placeholder = painterResource(id = R.drawable.store_default),
+                    error = painterResource(id = R.drawable.store_default),
+                    fallback = painterResource(id = R.drawable.store_default),
+                    modifier = Modifier.fillMaxSize()
+                )
+            }
+
+            Spacer(modifier = Modifier.width(12.dp))
+
+            // Store Details
+            Column(
+                modifier = Modifier.weight(1f)
+            ) {
+                // Store Name
+                Text(
+                    text = store.name,
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = SlashColors.PrimaryText,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+
+                Spacer(modifier = Modifier.height(4.dp))
+
+                // Store Info
+                StoreInfoRow(
+                    label = "Category",
+                    value = store.category_name
+                )
+                StoreInfoRow(
+                    label = "Minimum Order",
+                    value = "₹${store.minimum_order_amount}"
+                )
+                StoreInfoRow(
+                    label = "Distance",
+                    value = calculateDistance(store.latitude, store.longitude)
+                )
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                // VIP Discount Badge
+                if (store.vip_discount_percentage.toDouble() > 0) {
+                    VipDiscountBadge(
+                        discountPercentage = store.vip_discount_percentage
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun StoreInfoRow(
+    label: String,
+    value: String,
+    modifier: Modifier = Modifier
+) {
+    Text(
+        text = "$label - $value",
+        fontSize = 12.sp,
+        color = SlashColors.SecondaryText,
+        modifier = modifier
+    )
+}
+
+@Composable
+private fun VipDiscountBadge(
+    discountPercentage: String,
+    modifier: Modifier = Modifier
+) {
+    Surface(
+        color = SlashColors.Primary,
+        shape = RoundedCornerShape(4.dp),
+        modifier = modifier
+    ) {
+        Row(
+            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Icon(
+                painter = painterResource(id = R.drawable.vip),
+                contentDescription = "VIP",
+                modifier = Modifier.size(12.dp),
+                tint = Color.White
+            )
+            Spacer(modifier = Modifier.width(4.dp))
+            Text(
+                text = "VIP Discount of $discountPercentage%",
+                fontSize = 10.sp,
+                color = Color.White,
+                fontWeight = FontWeight.Medium
+            )
+        }
+    }
+}
+
+/**
+ * Enum for different category item sizes
+ */
+enum class CategoryItemSize {
+    Small,  // For store list screen (circular, smaller)
+    Large   // For home screen (rectangular, larger)
 }

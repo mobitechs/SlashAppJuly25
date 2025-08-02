@@ -1,6 +1,5 @@
 package com.mobitechs.slashapp.ui.screens
 
-import android.annotation.SuppressLint
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -19,7 +18,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
@@ -65,8 +63,12 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import coil.compose.AsyncImage
 import com.mobitechs.slashapp.R
+import com.mobitechs.slashapp.Screen
 import com.mobitechs.slashapp.data.model.CategoryItem
 import com.mobitechs.slashapp.data.model.StoreListItem
+import com.mobitechs.slashapp.ui.components.CategoryItemSize
+import com.mobitechs.slashapp.ui.components.CommonCategoryItem
+import com.mobitechs.slashapp.ui.components.CommonStoreCardHorizontal
 import com.mobitechs.slashapp.ui.theme.SlashColors
 import com.mobitechs.slashapp.ui.viewmodels.HomeViewModel
 
@@ -168,15 +170,30 @@ fun HomeScreen(
                         .fillMaxWidth()
                         .padding(vertical = 16.dp)
                 ) {
-                    CategoriesSection(
-                        categories = uiState.categories,
-                        isLoading = uiState.isCategoriesLoading,
-                        error = uiState.categoriesError,
-                        onRetry = { viewModel.loadCategories() },
-                        onClearError = { viewModel.clearCategoriesError() },
-                        viewModel = viewModel,
-                        modifier = Modifier
-                    )
+//                    CategoriesSection(
+//                        categories = uiState.categories,
+//                        isLoading = uiState.isCategoriesLoading,
+//                        error = uiState.categoriesError,
+//                        onRetry = { viewModel.loadCategories() },
+//                        onClearError = { viewModel.clearCategoriesError() },
+//                        viewModel = viewModel,
+//                        modifier = Modifier
+//                    )
+
+                    LazyRow(
+                        horizontalArrangement = Arrangement.spacedBy(16.dp),
+                        contentPadding = PaddingValues(horizontal = 16.dp)
+                    ) {
+                        items(uiState.categories, key = { it.id }) { category ->
+                            CommonCategoryItem(
+                                category = category,
+                                isSelected = false, // No selection in home screen
+                                onSelected = null,   // No selection handling in home screen
+                                getFallbackIconRes = viewModel::getFallbackIconRes,
+                                size = CategoryItemSize.Large
+                            )
+                        }
+                    }
                 }
             }
 
@@ -207,6 +224,7 @@ fun HomeScreen(
                         onRetry = { viewModel.loadTopStores() },
                         onClearError = { viewModel.clearStoresError() },
                         viewModel = viewModel,
+                        navController = navController,
                         modifier = Modifier.padding(start = 1.dp)
                     )
                 }
@@ -723,7 +741,8 @@ private fun TopStoresSection(
     onRetry: () -> Unit,
     onClearError: () -> Unit,
     viewModel: HomeViewModel,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    navController: NavController
 ) {
     Column(modifier = modifier) {
         Row(
@@ -782,9 +801,12 @@ private fun TopStoresSection(
                     contentPadding = PaddingValues(horizontal = 16.dp)
                 ) {
                     items(stores, key = { it.id }) { store ->
-                        StoreCard(
+                        CommonStoreCardHorizontal(
                             store = store,
-                            viewModel = viewModel
+                            calculateDistance = viewModel::calculateDistance,
+                            onStoreClick = {
+                                navController.navigate("${Screen.StoreDetailsScreen.route}/${store.id}")
+                            }
                         )
                     }
                 }

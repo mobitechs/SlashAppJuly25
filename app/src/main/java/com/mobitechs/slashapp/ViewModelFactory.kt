@@ -18,6 +18,7 @@ import com.mobitechs.slashapp.ui.viewmodels.BottomMenuStoreViewModel
 import com.mobitechs.slashapp.ui.viewmodels.BottomMenuTransactionViewModel
 import com.mobitechs.slashapp.ui.viewmodels.HomeViewModel
 import com.mobitechs.slashapp.ui.viewmodels.SplashViewModel
+import com.mobitechs.slashapp.ui.viewmodels.StoreDetailsViewModel
 import com.mobitechs.slashapp.ui.viewmodels.TransactionViewModel
 
 //import com.mobitechs.slashapp.ui.viewmodels.TransactionViewModel
@@ -69,11 +70,14 @@ class ViewModelFactory(
             }
 
             modelClass.isAssignableFrom( BottomMenuStoreViewModel::class.java) -> {
-                BottomMenuStoreViewModel() as T
+                BottomMenuStoreViewModel(homeRepository,storeRepository) as T
             }
 
             modelClass.isAssignableFrom(TransactionViewModel::class.java) -> {
                 TransactionViewModel(qRScannerRepository,authRepository) as T
+            }
+            modelClass.isAssignableFrom(StoreDetailsViewModel::class.java) -> {
+                StoreDetailsViewModel(storeRepository) as T
             }
 
 

@@ -13,6 +13,7 @@ import com.mobitechs.slashapp.data.model.SendOTPResponse
 import com.mobitechs.slashapp.data.model.SendOtpRequest
 import com.mobitechs.slashapp.data.model.StoreListResponse
 import com.mobitechs.slashapp.data.model.StoreResponse
+import com.mobitechs.slashapp.data.model.StoreReviewsListResponse
 import com.mobitechs.slashapp.data.model.TransactionStatsResponse
 import com.mobitechs.slashapp.data.model.TransactionsInitiateResponse
 import com.mobitechs.slashapp.data.model.UpdateTransactionResponse
@@ -53,35 +54,52 @@ interface ApiService {
     ): Response<StoreListResponse>
 
 
-    @GET("stores")
+    @GET("stores/categories/{categoryId}/stores")
     suspend fun getCategoryWiseStoreList(
-        @Query("categoryId") categoryId: String,
+        @Path("categoryId") categoryId: String,  // ← Changed from @Query to @Path
         @Query("page") page: String,
         @Query("limit") limit: String
     ): Response<StoreListResponse>
 
+
     @GET("stores")
     suspend fun getSearchWiseStoreList(
-        @Query("query") query: String,
+        @Query("search") query: String,
         @Query("page") page: String,
         @Query("limit") limit: String
     ): Response<StoreListResponse>
 
 
     @GET("stores/search?q=")
-    suspend fun getSearchWiseStoreList2( @Query("query") storeId: String): Response<StoreListResponse>
+    suspend fun getSearchWiseStoreList2( @Query("search") storeId: String): Response<StoreListResponse>
 
     @GET("stores/favorites")
     suspend fun getFavouriteStoreList(): Response<StoreListResponse>
 
     @GET("stores/{storeId}")
-    suspend fun getStoreDetails(
+    suspend fun getStoreWiseDetails(
         @Path("storeId") storeId: String
     ): Response<StoreResponse>
+
+    @GET("stores/{storeId}/reviews")
+    suspend fun getStoreReviews(
+        @Path("storeId") query: String,
+        @Query("page") page: String,
+        @Query("limit") limit: String
+    ): Response<StoreReviewsListResponse>
 
     @POST("stores/{storeId}}/reviews")
     suspend fun addStoreReview( @Path("storeId") storeId: String,@Body request: AddStoreReviewRequest): Response<AddStoreReviewResponse>
 
+    @POST("stores/{storeId}/favorites")
+    suspend fun addToFavourites(
+        @Path("storeId") storeId: String
+    ): Response<StoreResponse>
+
+    @POST("stores/{storeId}/favorites")
+    suspend fun removeFromFavourites(
+        @Path("storeId") storeId: String
+    ): Response<StoreResponse>
 
     @POST("coupons/validateCoupon")
     suspend fun validateCoupon(@Body request: ValidateCouponRequest): Response<CouponValidationResponse>

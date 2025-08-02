@@ -2,8 +2,11 @@ package com.mobitechs.slashapp.data.repository
 
 import com.mobitechs.slashapp.data.api.ApiService
 import com.mobitechs.slashapp.data.local.SharedPrefsManager
+import com.mobitechs.slashapp.data.model.AddStoreReviewRequest
+import com.mobitechs.slashapp.data.model.AddStoreReviewResponse
 import com.mobitechs.slashapp.data.model.StoreListResponse
 import com.mobitechs.slashapp.data.model.StoreResponse
+import com.mobitechs.slashapp.data.model.StoreReviewsListResponse
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
@@ -12,7 +15,9 @@ class StoreRepository(
     private val sharedPrefsManager: SharedPrefsManager
 ) {
 
-
+    /**
+     * Get all stores with pagination
+     */
     suspend fun getAllStoreList(page: String, limit: String): StoreListResponse =
         withContext(Dispatchers.IO) {
             val response = apiService.getAllStoreList(page, limit)
@@ -25,9 +30,17 @@ class StoreRepository(
             }
         }
 
-    suspend fun getCategoryWiseStoreList(categoryId: String,page: String, limit: String): StoreListResponse =
+    /**
+     * Get stores by category with pagination
+     */
+    suspend fun getCategoryWiseStoreList(categoryId: String, page: String, limit: String): StoreListResponse =
         withContext(Dispatchers.IO) {
-            val response = apiService.getCategoryWiseStoreList(categoryId, page, limit)
+            val response = if (categoryId.isEmpty() || categoryId == "0") {
+                // If categoryId is empty or "0" (All category), get all stores
+                apiService.getAllStoreList(page, limit)
+            } else {
+                apiService.getCategoryWiseStoreList(categoryId, page, limit)
+            }
 
             if (response.isSuccessful) {
                 val apiResponse = response.body() ?: throw Exception("Empty response body")
@@ -37,7 +50,10 @@ class StoreRepository(
             }
         }
 
-    suspend fun getSearchWiseStoreList(query: String,page: String, limit: String): StoreListResponse =
+    /**
+     * Search stores with pagination
+     */
+    suspend fun getSearchWiseStoreList(query: String, page: String, limit: String): StoreListResponse =
         withContext(Dispatchers.IO) {
             val response = apiService.getSearchWiseStoreList(query, page, limit)
 
@@ -49,6 +65,36 @@ class StoreRepository(
             }
         }
 
+    /**
+     * Get store details by ID
+     */
+    suspend fun getStoreWiseDetails(storeId: String): StoreResponse =
+        withContext(Dispatchers.IO) {
+            val response = apiService.getStoreWiseDetails(storeId)
+
+            if (response.isSuccessful) {
+                val apiResponse = response.body() ?: throw Exception("Empty response body")
+                return@withContext apiResponse
+            } else {
+                throw Exception("Failed to get searched store details: ${response.message()}")
+            }
+        }
+
+    suspend fun getStoreReviews(storeId: String,page: String, limit: String): StoreReviewsListResponse =
+        withContext(Dispatchers.IO) {
+            val response = apiService.getStoreReviews(storeId,page, limit)
+
+            if (response.isSuccessful) {
+                val apiResponse = response.body() ?: throw Exception("Empty response body")
+                return@withContext apiResponse
+            } else {
+                throw Exception("Failed to get store details: ${response.message()}")
+            }
+        }
+
+    /**
+     * Get user's favourite stores
+     */
     suspend fun getFavouriteStoreList(): StoreListResponse =
         withContext(Dispatchers.IO) {
             val response = apiService.getFavouriteStoreList()
@@ -57,32 +103,61 @@ class StoreRepository(
                 val apiResponse = response.body() ?: throw Exception("Empty response body")
                 return@withContext apiResponse
             } else {
-                throw Exception("Failed to get searched store details: ${response.message()}")
+                throw Exception("Failed to get favourite stores: ${response.message()}")
             }
         }
 
-    suspend fun getStoreDetails(storeId: String): StoreResponse =
+
+
+    /**
+     * Add or update store review
+     */
+    suspend fun addStoreReview(
+        storeId: String,
+        rating: String,
+        title: String,
+        description: String
+    ): AddStoreReviewResponse =
         withContext(Dispatchers.IO) {
-            val response = apiService.getStoreDetails(storeId)
+            // You'll need to implement this API call based on your backend
+            var req = AddStoreReviewRequest(rating, title, description)
+            val response = apiService.addStoreReview(storeId,req)
 
             if (response.isSuccessful) {
                 val apiResponse = response.body() ?: throw Exception("Empty response body")
                 return@withContext apiResponse
             } else {
-                throw Exception("Failed to get searched store details: ${response.message()}")
+                throw Exception("Failed to add store review: ${response.message()}")
             }
         }
 
-    suspend fun addStoreReview(storeId: String): StoreResponse =
+    /**
+     * Add store to favourites
+     */
+    suspend fun addToFavourites(storeId: String): StoreResponse =
         withContext(Dispatchers.IO) {
-            val response = apiService.getStoreDetails(storeId)
+            val response = apiService.addToFavourites(storeId)
 
             if (response.isSuccessful) {
                 val apiResponse = response.body() ?: throw Exception("Empty response body")
                 return@withContext apiResponse
             } else {
-                throw Exception("Failed to get searched store details: ${response.message()}")
+                throw Exception("Failed to add to favourites: ${response.message()}")
             }
         }
 
+    /**
+     * Remove store from favourites
+     */
+    suspend fun removeFromFavourites(storeId: String): StoreResponse =
+        withContext(Dispatchers.IO) {
+            val response = apiService.removeFromFavourites(storeId)
+
+            if (response.isSuccessful) {
+                val apiResponse = response.body() ?: throw Exception("Empty response body")
+                return@withContext apiResponse
+            } else {
+                throw Exception("Failed to remove from favourites: ${response.message()}")
+            }
+        }
 }

@@ -2,12 +2,14 @@ package com.mobitechs.slashapp.data.model
 
 data class StoreListResponse(
     val success: Boolean,
+    val message: String?,
     val pagination: Pagination,
     val data: List<StoreListItem>
 )
 
 data class StoreResponse(
     val success: Boolean,
+    val message: String?,
     val data: StoreListItem
 
 )

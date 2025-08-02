@@ -109,3 +109,30 @@ fun formatDecimalString(value: String): String {
         value // Return original if not a valid number
     }
 }
+
+// Helper functions to format amounts and percentages
+fun formatAmount(amount: String): String {
+    return try {
+        val doubleValue = amount.toDouble()
+        if (doubleValue == doubleValue.toInt().toDouble()) {
+            doubleValue.toInt().toString()
+        } else {
+            amount
+        }
+    } catch (e: NumberFormatException) {
+        amount
+    }
+}
+
+fun formatPercentage(percentage: String): String {
+    return try {
+        val doubleValue = percentage.toDouble()
+        if (doubleValue == doubleValue.toInt().toDouble()) {
+            doubleValue.toInt().toString()
+        } else {
+            percentage
+        }
+    } catch (e: NumberFormatException) {
+        percentage
+    }
+}
