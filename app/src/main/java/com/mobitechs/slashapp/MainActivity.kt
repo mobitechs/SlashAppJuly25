@@ -36,8 +36,10 @@ import com.mobitechs.slashapp.ui.viewmodels.SplashViewModel
 import kotlin.collections.contains
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.WindowInsets
+import com.mobitechs.slashapp.ui.screens.AddReviewScreen
 import com.mobitechs.slashapp.ui.screens.StoreDetailsScreen
 import com.mobitechs.slashapp.ui.screens.TransactionScreen
+import com.mobitechs.slashapp.ui.viewmodels.AddReviewViewModel
 import com.mobitechs.slashapp.ui.viewmodels.StoreDetailsViewModel
 import com.mobitechs.slashapp.ui.viewmodels.TransactionViewModel
 
@@ -251,6 +253,16 @@ fun AppNavigation(viewModelFactory: ViewModelFactory) {
                 )
             }
 
+            composable(Screen.AddReviewScreen.route+"/{storeId}") { backStackEntry ->
+                val storeId = backStackEntry.arguments?.getString("storeId") ?: ""
+                val viewModel: AddReviewViewModel = viewModel(factory = viewModelFactory)
+                AddReviewScreen(
+                    viewModel = viewModel,
+                    navController = navController,
+                    storeId = storeId
+                )
+            }
+
 
 
         }
@@ -272,6 +284,7 @@ sealed class Screen(val route: String) {
     object BottomMenuStoreScreen : Screen("BottomMenuStoreScreen")
     object TransactionScreen : Screen("TransactionScreen")
     object StoreDetailsScreen : Screen("StoreDetailsScreen")
+    object AddReviewScreen : Screen("AddReviewScreen")
 
 
 

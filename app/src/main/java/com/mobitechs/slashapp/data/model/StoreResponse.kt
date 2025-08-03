@@ -40,8 +40,19 @@ data class StoreListItem(
     val created_at: String,
     val updated_at: String,
     val review_count: Int?,
-    val transaction_count: Int?
+    val transaction_count: Int?,
+
+    val closed_by: String,
+    val commission_percent: String,
+    val contract_start_date: String,
+    val contract_expiry_date: String,
+    val images: Any?,
+    val is_favourite: Boolean,
+    val is_premium: Int,
+    val sub_category: String,
+    val user_review: UserReview?,
 )
+
 
 
 data class AddStoreReviewResponse(

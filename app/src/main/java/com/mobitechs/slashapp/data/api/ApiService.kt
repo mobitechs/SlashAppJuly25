@@ -8,6 +8,7 @@ import com.mobitechs.slashapp.data.model.MyTransactionListResponse
 import com.mobitechs.slashapp.data.model.OTPVerifyResponse
 import com.mobitechs.slashapp.data.model.ProfileResponse
 import com.mobitechs.slashapp.data.model.RegisterUserRequest
+import com.mobitechs.slashapp.data.model.ReviewMarkResponse
 import com.mobitechs.slashapp.data.model.SaveTransactionRequest
 import com.mobitechs.slashapp.data.model.SendOTPResponse
 import com.mobitechs.slashapp.data.model.SendOtpRequest
@@ -91,15 +92,30 @@ interface ApiService {
     @POST("stores/{storeId}}/reviews")
     suspend fun addStoreReview( @Path("storeId") storeId: String,@Body request: AddStoreReviewRequest): Response<AddStoreReviewResponse>
 
-    @POST("stores/{storeId}/favorites")
-    suspend fun addToFavourites(
+    @POST("stores/{storeId}/favorite")
+    suspend fun addRemoveToFavourites(
         @Path("storeId") storeId: String
     ): Response<StoreResponse>
 
-    @POST("stores/{storeId}/favorites")
-    suspend fun removeFromFavourites(
-        @Path("storeId") storeId: String
-    ): Response<StoreResponse>
+    @POST("stores/reviews/{reviewId}/helpful")
+    suspend fun addRemoveHelpfulReview(
+        @Path("reviewId") storeId: String
+    ): Response<ReviewMarkResponse>
+
+
+    @POST("stores/reviews/{reviewId}/report")
+    suspend fun addRemoveReportReview(
+        @Path("reviewId") storeId: String
+    ): Response<ReviewMarkResponse>
+
+
+
+
+
+
+
+
+
 
     @POST("coupons/validateCoupon")
     suspend fun validateCoupon(@Body request: ValidateCouponRequest): Response<CouponValidationResponse>

@@ -26,10 +26,10 @@ data class StoreDetailsUiState(
 
     val isRefreshing: Boolean = false,
 
-    // Add review states
-    val showAddReviewDialog: Boolean = false,
-    val isAddingReview: Boolean = false,
-    val addReviewError: String = ""
+    val helpfulReviews: Map<Int, Boolean> = emptyMap(), // reviewId -> isMarked
+    val reportedReviews: Map<Int, Boolean> = emptyMap(), // reviewId -> isMarked
+    val markingInProgress: Set<Int> = emptySet() // reviewIds being marked
+
 )
 
 class StoreDetailsViewModel(
@@ -61,7 +61,7 @@ class StoreDetailsViewModel(
                     _uiState.value = _uiState.value.copy(
                         store = response.data,
                         isStoreLoading = false,
-                        isFavorite = response.data?.is_partner == 1 // Assuming is_partner indicates favorite
+                        isFavorite = response.data?.is_favourite == true // Assuming is_partner indicates favorite
                     )
                 } else {
                     _uiState.value = _uiState.value.copy(
@@ -145,11 +145,7 @@ class StoreDetailsViewModel(
             _uiState.value = _uiState.value.copy(isUpdatingFavorite = true)
 
             try {
-                val response = if (currentState.isFavorite) {
-                    storeRepository.removeFromFavourites(storeId)
-                } else {
-                    storeRepository.addToFavourites(storeId)
-                }
+                val response = storeRepository.addToFavourites(storeId)
 
                 if (response.success) {
                     _uiState.value = _uiState.value.copy(
@@ -171,6 +167,71 @@ class StoreDetailsViewModel(
         }
     }
 
+    fun markReviewHelpful(reviewId: Int) {
+        val currentState = _uiState.value
+        if (currentState.markingInProgress.contains(reviewId)) return
+
+        viewModelScope.launch {
+            _uiState.value = _uiState.value.copy(
+                markingInProgress = _uiState.value.markingInProgress + reviewId
+            )
+
+            try {
+                val response = storeRepository.addRemoveHelpfulReview(reviewId.toString())
+
+                if (response.success) {
+                    _uiState.value = _uiState.value.copy(
+                        helpfulReviews = _uiState.value.helpfulReviews.toMutableMap().apply {
+                            put(reviewId, response.data.is_marked)
+                        },
+                        markingInProgress = _uiState.value.markingInProgress - reviewId
+                    )
+                } else {
+                    _uiState.value = _uiState.value.copy(
+                        markingInProgress = _uiState.value.markingInProgress - reviewId
+                    )
+                }
+            } catch (e: Exception) {
+                _uiState.value = _uiState.value.copy(
+                    markingInProgress = _uiState.value.markingInProgress - reviewId
+                )
+            }
+        }
+    }
+
+    fun markReviewReport(reviewId: Int) {
+        val currentState = _uiState.value
+        if (currentState.markingInProgress.contains(reviewId)) return
+
+        viewModelScope.launch {
+            _uiState.value = _uiState.value.copy(
+                markingInProgress = _uiState.value.markingInProgress + reviewId
+            )
+
+            try {
+                val response = storeRepository.addRemoveReportReview(reviewId.toString())
+
+                if (response.success) {
+                    _uiState.value = _uiState.value.copy(
+                        reportedReviews = _uiState.value.reportedReviews.toMutableMap().apply {
+                            put(reviewId, response.data.is_marked)
+                        },
+                        markingInProgress = _uiState.value.markingInProgress - reviewId
+                    )
+                } else {
+                    _uiState.value = _uiState.value.copy(
+                        markingInProgress = _uiState.value.markingInProgress - reviewId
+                    )
+                }
+            } catch (e: Exception) {
+                _uiState.value = _uiState.value.copy(
+                    markingInProgress = _uiState.value.markingInProgress - reviewId
+                )
+            }
+        }
+    }
+
+
     fun refreshData() {
         _uiState.value = _uiState.value.copy(isRefreshing = true)
 
@@ -181,6 +242,8 @@ class StoreDetailsViewModel(
         }
     }
 
+
+
     fun retryLoadStore() {
         loadStore()
     }
@@ -189,59 +252,11 @@ class StoreDetailsViewModel(
         loadReviews(page = 1, isRefresh = true)
     }
 
-    fun showAddReviewDialog() {
-        _uiState.value = _uiState.value.copy(showAddReviewDialog = true)
-    }
-
-    fun hideAddReviewDialog() {
-        _uiState.value = _uiState.value.copy(
-            showAddReviewDialog = false,
-            addReviewError = ""
-        )
-    }
-
-    fun addReview(rating: String, title: String, description: String) {
-        viewModelScope.launch {
-            _uiState.value = _uiState.value.copy(
-                isAddingReview = true,
-                addReviewError = ""
-            )
-
-            try {
-                val response = storeRepository.addStoreReview(
-                    storeId = storeId,
-                    rating = rating,
-                    title = title,
-                    description = description
-                )
-
-                if (response.success) {
-                    _uiState.value = _uiState.value.copy(
-                        isAddingReview = false,
-                        showAddReviewDialog = false
-                    )
-                    // Refresh reviews after adding
-                    loadReviews(page = 1, isRefresh = true)
-                } else {
-                    _uiState.value = _uiState.value.copy(
-                        isAddingReview = false,
-                        addReviewError = response.message ?: "Failed to add review"
-                    )
-                }
-            } catch (e: Exception) {
-                _uiState.value = _uiState.value.copy(
-                    isAddingReview = false,
-                    addReviewError = e.message ?: "Unknown error occurred"
-                )
-            }
-        }
-    }
 
     fun clearErrors() {
         _uiState.value = _uiState.value.copy(
             storeError = "",
-            reviewsError = "",
-            addReviewError = ""
+            reviewsError = ""
         )
     }
 }

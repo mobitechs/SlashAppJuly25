@@ -121,7 +121,7 @@ fun BottomMenuStoreScreen(
             contentPadding = PaddingValues(bottom = 16.dp)
         ) {
             // Top App Bar (scrollable)
-            item {
+            item(key = "top_app_bar") {
                 TopAppBar(
                     title = {
                         Text(
@@ -140,10 +140,6 @@ fun BottomMenuStoreScreen(
                             )
                         }
                     },
-                    actions = {
-                        // Refresh Button
-
-                    },
                     colors = TopAppBarDefaults.topAppBarColors(
                         containerColor = Color(0xFFF8F9FA) // Same background as screen
                     ),
@@ -152,7 +148,7 @@ fun BottomMenuStoreScreen(
             }
 
             // Location Bar (scrollable)
-            item {
+            item(key = "location_bar") {
                 LocationBar(
                     location = "DLF Mall, Noida, U.P",
                     modifier = Modifier
@@ -241,7 +237,7 @@ fun BottomMenuStoreScreen(
             }
 
             // Search Bar (sticky header)
-            stickyHeader(key = "search") {
+            stickyHeader(key = "search_header") {
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -322,7 +318,10 @@ fun BottomMenuStoreScreen(
 //                        )
 //                    }
 
-                    items(uiState.stores, key = { it.id }) { store ->
+                    items(
+                        items = uiState.stores,
+                        key = { store -> "store_${store.id}" }
+                    ) { store ->
                         StoreListCard(
                             store = store,
                             viewModel = viewModel,

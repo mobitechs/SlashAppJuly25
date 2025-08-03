@@ -4,6 +4,7 @@ import com.mobitechs.slashapp.data.api.ApiService
 import com.mobitechs.slashapp.data.local.SharedPrefsManager
 import com.mobitechs.slashapp.data.model.AddStoreReviewRequest
 import com.mobitechs.slashapp.data.model.AddStoreReviewResponse
+import com.mobitechs.slashapp.data.model.ReviewMarkResponse
 import com.mobitechs.slashapp.data.model.StoreListResponse
 import com.mobitechs.slashapp.data.model.StoreResponse
 import com.mobitechs.slashapp.data.model.StoreReviewsListResponse
@@ -136,7 +137,7 @@ class StoreRepository(
      */
     suspend fun addToFavourites(storeId: String): StoreResponse =
         withContext(Dispatchers.IO) {
-            val response = apiService.addToFavourites(storeId)
+            val response = apiService.addRemoveToFavourites(storeId)
 
             if (response.isSuccessful) {
                 val apiResponse = response.body() ?: throw Exception("Empty response body")
@@ -147,17 +148,32 @@ class StoreRepository(
         }
 
     /**
-     * Remove store from favourites
+     * Add or Remove helpful marking of review
      */
-    suspend fun removeFromFavourites(storeId: String): StoreResponse =
+    suspend fun addRemoveHelpfulReview(reviewId: String): ReviewMarkResponse =
         withContext(Dispatchers.IO) {
-            val response = apiService.removeFromFavourites(storeId)
+            val response = apiService.addRemoveHelpfulReview(reviewId)
 
             if (response.isSuccessful) {
                 val apiResponse = response.body() ?: throw Exception("Empty response body")
                 return@withContext apiResponse
             } else {
-                throw Exception("Failed to remove from favourites: ${response.message()}")
+                throw Exception("Failed to mark helpful: ${response.message()}")
+            }
+        }
+
+    /**
+     * Add or Remove report marking of review
+     */
+    suspend fun addRemoveReportReview(reviewId: String): ReviewMarkResponse =
+        withContext(Dispatchers.IO) {
+            val response = apiService.addRemoveReportReview(reviewId)
+
+            if (response.isSuccessful) {
+                val apiResponse = response.body() ?: throw Exception("Empty response body")
+                return@withContext apiResponse
+            } else {
+                throw Exception("Failed to mark report: ${response.message()}")
             }
         }
 }

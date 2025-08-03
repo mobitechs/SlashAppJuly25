@@ -9,6 +9,7 @@ import com.mobitechs.slashapp.data.repository.QRScannerRepository
 import com.mobitechs.slashapp.data.repository.RewardsRepository
 import com.mobitechs.slashapp.data.repository.StoreRepository
 import com.mobitechs.slashapp.data.repository.TransactionRepository
+import com.mobitechs.slashapp.ui.viewmodels.AddReviewViewModel
 import com.mobitechs.slashapp.ui.viewmodels.AuthOtpVerificationViewModel
 import com.mobitechs.slashapp.ui.viewmodels.AuthPhoneViewModel
 import com.mobitechs.slashapp.ui.viewmodels.AuthRegisterViewModel
@@ -78,6 +79,9 @@ class ViewModelFactory(
             }
             modelClass.isAssignableFrom(StoreDetailsViewModel::class.java) -> {
                 StoreDetailsViewModel(storeRepository) as T
+            }
+            modelClass.isAssignableFrom(AddReviewViewModel::class.java) -> {
+                AddReviewViewModel(storeRepository) as T
             }
 
 
