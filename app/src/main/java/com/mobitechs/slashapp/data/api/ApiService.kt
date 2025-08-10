@@ -139,6 +139,38 @@ interface ApiService {
     ): Response<MyTransactionListResponse>
 
 
+    @GET("transactions")
+    suspend fun getMyTransactionListWithSearchFilter(
+        @Query("search") search: String,
+        @Query("page") page: String,
+        @Query("limit") limit: String
+    ): Response<MyTransactionListResponse>
+
+    @GET("transactions")
+    suspend fun getMyTransactionListWithDateRangeFilter(
+        @Query("date_from") date_from: String,
+        @Query("date_to") date_to: String,
+        @Query("page") page: String,
+        @Query("limit") limit: String
+    ): Response<MyTransactionListResponse>
+
+    @GET("transactions")
+    suspend fun getMyTransactionListWithAmountFilter(
+        @Query("min_amount") min_amount: String,
+        @Query("max_amount") max_amount: String,
+        @Query("page") page: String,
+        @Query("limit") limit: String
+    ): Response<MyTransactionListResponse>
+
+    @GET("transactions")
+    suspend fun getMyTransactionListWithStoreAndStatusFilter(
+        @Query("store_id") store_id: String,
+        @Query("status") status: String,
+        @Query("page") page: String,
+        @Query("limit") limit: String
+    ): Response<MyTransactionListResponse>
+
+
     @GET("transactions/stats")
     suspend fun getTransactionStats(): Response<TransactionStatsResponse>
 

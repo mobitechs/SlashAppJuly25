@@ -20,6 +20,7 @@ import com.mobitechs.slashapp.ui.viewmodels.BottomMenuTransactionViewModel
 import com.mobitechs.slashapp.ui.viewmodels.HomeViewModel
 import com.mobitechs.slashapp.ui.viewmodels.SplashViewModel
 import com.mobitechs.slashapp.ui.viewmodels.StoreDetailsViewModel
+import com.mobitechs.slashapp.ui.viewmodels.TransactionDetailsViewModel
 import com.mobitechs.slashapp.ui.viewmodels.TransactionViewModel
 
 //import com.mobitechs.slashapp.ui.viewmodels.TransactionViewModel
@@ -51,15 +52,17 @@ class ViewModelFactory(
             modelClass.isAssignableFrom(AuthOtpVerificationViewModel::class.java) -> {
                 AuthOtpVerificationViewModel(authRepository) as T
             }
+
             modelClass.isAssignableFrom(AuthRegisterViewModel::class.java) -> {
                 AuthRegisterViewModel(authRepository) as T
             }
+
             modelClass.isAssignableFrom(HomeViewModel::class.java) -> {
-                HomeViewModel(homeRepository,authRepository) as T
+                HomeViewModel(homeRepository, authRepository) as T
             }
 
             modelClass.isAssignableFrom(BottomMenuTransactionViewModel::class.java) -> {
-                BottomMenuTransactionViewModel() as T
+                BottomMenuTransactionViewModel(transactionRepository) as T
             }
 
             modelClass.isAssignableFrom(BottomMenuScanViewModel::class.java) -> {
@@ -70,18 +73,24 @@ class ViewModelFactory(
                 BottomMenuRewardViewModel() as T
             }
 
-            modelClass.isAssignableFrom( BottomMenuStoreViewModel::class.java) -> {
-                BottomMenuStoreViewModel(homeRepository,storeRepository) as T
+            modelClass.isAssignableFrom(BottomMenuStoreViewModel::class.java) -> {
+                BottomMenuStoreViewModel(homeRepository, storeRepository) as T
             }
 
             modelClass.isAssignableFrom(TransactionViewModel::class.java) -> {
-                TransactionViewModel(qRScannerRepository,authRepository) as T
+                TransactionViewModel(qRScannerRepository, authRepository) as T
             }
+
             modelClass.isAssignableFrom(StoreDetailsViewModel::class.java) -> {
                 StoreDetailsViewModel(storeRepository) as T
             }
+
             modelClass.isAssignableFrom(AddReviewViewModel::class.java) -> {
                 AddReviewViewModel(storeRepository) as T
+            }
+
+            modelClass.isAssignableFrom(TransactionDetailsViewModel::class.java) -> {
+                TransactionDetailsViewModel(transactionRepository) as T
             }
 
 

@@ -8,7 +8,7 @@ import kotlinx.coroutines.launch
 
 // UI State for phone input screen
 data class AuthPhoneUiState(
-    val phoneNumber: String = "8655883062",
+    val phoneNumber: String = "8655883061",
     val otp: String = "123456",
     val otpExpiry: String = "",
     val phoneError: String = "",

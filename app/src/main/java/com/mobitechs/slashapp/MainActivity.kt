@@ -38,9 +38,11 @@ import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.WindowInsets
 import com.mobitechs.slashapp.ui.screens.AddReviewScreen
 import com.mobitechs.slashapp.ui.screens.StoreDetailsScreen
+import com.mobitechs.slashapp.ui.screens.TransactionDetailsScreen
 import com.mobitechs.slashapp.ui.screens.TransactionScreen
 import com.mobitechs.slashapp.ui.viewmodels.AddReviewViewModel
 import com.mobitechs.slashapp.ui.viewmodels.StoreDetailsViewModel
+import com.mobitechs.slashapp.ui.viewmodels.TransactionDetailsViewModel
 import com.mobitechs.slashapp.ui.viewmodels.TransactionViewModel
 
 class MainActivity : ComponentActivity() {
@@ -263,7 +265,15 @@ fun AppNavigation(viewModelFactory: ViewModelFactory) {
                 )
             }
 
-
+            composable(Screen.TransactionDetailsScreen.route+"/{transactionId}") { backStackEntry ->
+                val transactionId = backStackEntry.arguments?.getString("transactionId") ?: "0"
+                val viewModel: TransactionDetailsViewModel = viewModel(factory = viewModelFactory)
+                TransactionDetailsScreen(
+                    viewModel = viewModel,
+                    navController = navController,
+                    transactionId = transactionId
+                )
+            }
 
         }
     }
@@ -285,6 +295,7 @@ sealed class Screen(val route: String) {
     object TransactionScreen : Screen("TransactionScreen")
     object StoreDetailsScreen : Screen("StoreDetailsScreen")
     object AddReviewScreen : Screen("AddReviewScreen")
+    object TransactionDetailsScreen : Screen("TransactionDetailsScreen")
 
 
 

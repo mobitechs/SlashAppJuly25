@@ -307,16 +307,6 @@ fun BottomMenuStoreScreen(
                     }
                 }
                 else -> {
-                    // Store Items
-//                    items(uiState.stores, key = { it.id }) { store ->
-//                        StoreListCard(
-//                            store = store,
-//                            viewModel = viewModel,
-//                            modifier = Modifier
-//                                .fillMaxWidth()
-//                                .padding(horizontal = 16.dp, vertical = 6.dp)
-//                        )
-//                    }
 
                     items(
                         items = uiState.stores,
