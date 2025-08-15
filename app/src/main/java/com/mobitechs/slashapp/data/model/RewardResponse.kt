@@ -1,19 +1,24 @@
 package com.mobitechs.slashapp.data.model
 
-data class RewardListResponse(
-    val success: Boolean,
-    val data: List<RewardListItem>
+data class RewardSummeryResponse(
+    val data: RewardSummeryData,
+    val success: Boolean
+)
+
+data class RewardSummeryData(
+    val coupons: Coupons,
+    val recent_activity: RecentActivity,
+    val wallet: Wallet
+)
+
+data class Coupons(
+    val available_count: Int,
+    val used_count: Int
+)
+
+data class RecentActivity(
+    val credits_last_30_days: Int,
+    val debits_last_30_days: Int
 )
 
 
-data class RewardListItem(
-    val id: Int,
-    val user_id: Int,
-    val transaction_id: Int?,
-    val store_id: Int?,
-    val reward_type: String,
-    val amount: Double,
-    val description: String?,
-    val credit_debit: String, // "CREDIT" or "DEBIT"
-    val created_at: String
-)

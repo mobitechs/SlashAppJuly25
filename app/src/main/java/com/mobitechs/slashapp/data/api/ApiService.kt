@@ -3,15 +3,24 @@ package com.mobitechs.slashapp.data.api
 import com.mobitechs.slashapp.data.model.AddStoreReviewRequest
 import com.mobitechs.slashapp.data.model.AddStoreReviewResponse
 import com.mobitechs.slashapp.data.model.CategoryListResponse
+import com.mobitechs.slashapp.data.model.CouponResponse
 import com.mobitechs.slashapp.data.model.CouponValidationResponse
 import com.mobitechs.slashapp.data.model.MyTransactionListResponse
 import com.mobitechs.slashapp.data.model.OTPVerifyResponse
 import com.mobitechs.slashapp.data.model.ProfileResponse
 import com.mobitechs.slashapp.data.model.RegisterUserRequest
 import com.mobitechs.slashapp.data.model.ReviewMarkResponse
+import com.mobitechs.slashapp.data.model.RewardCouponResponse
+import com.mobitechs.slashapp.data.model.RewardHistoryResponse
+import com.mobitechs.slashapp.data.model.RewardSummeryResponse
 import com.mobitechs.slashapp.data.model.SaveTransactionRequest
 import com.mobitechs.slashapp.data.model.SendOTPResponse
 import com.mobitechs.slashapp.data.model.SendOtpRequest
+import com.mobitechs.slashapp.data.model.SpinWheelCampaignDetailsResponse
+import com.mobitechs.slashapp.data.model.SpinWheelCampaignResponse
+import com.mobitechs.slashapp.data.model.SpinWheelHistoryResponse
+import com.mobitechs.slashapp.data.model.SpinWheelResultResponse
+import com.mobitechs.slashapp.data.model.SpinWheelSummeryResponse
 import com.mobitechs.slashapp.data.model.StoreListResponse
 import com.mobitechs.slashapp.data.model.StoreResponse
 import com.mobitechs.slashapp.data.model.StoreReviewsListResponse
@@ -22,6 +31,7 @@ import com.mobitechs.slashapp.data.model.ValidateCouponRequest
 import com.mobitechs.slashapp.data.model.VerifyOtpRequest
 import retrofit2.Response
 import retrofit2.http.Body
+import retrofit2.http.Field
 import retrofit2.http.GET
 import retrofit2.http.POST
 import retrofit2.http.Path
@@ -110,16 +120,8 @@ interface ApiService {
 
 
 
-
-
-
-
-
-
-
     @POST("coupons/validateCoupon")
     suspend fun validateCoupon(@Body request: ValidateCouponRequest): Response<CouponValidationResponse>
-
 
     @POST("transactions/initiate")
     suspend fun initiateTransaction(@Body request: SaveTransactionRequest): Response<TransactionsInitiateResponse>
@@ -130,14 +132,11 @@ interface ApiService {
         @Body request: SaveTransactionRequest
     ): Response<UpdateTransactionResponse>
 
-
-
     @GET("transactions")
     suspend fun getMyTransactionList(
         @Query("page") page: String,
         @Query("limit") limit: String
     ): Response<MyTransactionListResponse>
-
 
     @GET("transactions")
     suspend fun getMyTransactionListWithSearchFilter(
@@ -170,9 +169,63 @@ interface ApiService {
         @Query("limit") limit: String
     ): Response<MyTransactionListResponse>
 
-
     @GET("transactions/stats")
     suspend fun getTransactionStats(): Response<TransactionStatsResponse>
+
+
+
+
+//reward
+
+    @GET("rewards/summary")
+    suspend fun getRewardStats(): Response<RewardSummeryResponse>
+
+    @GET("rewards/coupons/available")
+    suspend fun getAvailableCoupons(): Response<RewardCouponResponse>
+
+    @GET("rewards/history")
+    suspend fun getRewardHistory(
+        @Query("page") page: String,
+        @Query("limit") limit: String
+    ): Response<RewardHistoryResponse>
+
+    @GET("rewards/history/filter")
+    suspend fun getRewardHistoryWithFilter(
+        @Query("reward_type") rewardType: String,
+        @Query("page") page: String,
+        @Query("limit") limit: String
+    ): Response<RewardHistoryResponse>
+
+    @GET("rewards/history/date-range")
+    suspend fun getRewardHistoryWithDateRange(
+        @Query("date_from") dateFrom: String,
+        @Query("date_to") dateTo: String,
+        @Query("page") page: String,
+        @Query("limit") limit: String
+    ): Response<RewardHistoryResponse>
+
+
+
+// daily spin the wheel
+
+    @GET("daily-rewards/summary")
+    suspend fun getDailySpinWheelSummery(): Response<SpinWheelSummeryResponse>
+
+
+    @GET("daily-rewards/campaigns")
+    suspend fun getDailySpinWheelCampaign(): Response<SpinWheelCampaignResponse>
+
+    @GET("daily-rewards/spin-wheel/campaignId")
+    suspend fun getDailySpinWheelCampaignDetails(campaignId: String): Response<SpinWheelCampaignDetailsResponse>
+
+
+    @POST("daily-rewards/spin-wheel/{campaignId}/spin")
+    suspend fun spinWheelResult(
+        @Path("campaignId") campaignId: String,
+    ): Response<SpinWheelResultResponse>
+
+    @GET("daily-rewards/history")
+    suspend fun getSpinWheelHistory(): Response<SpinWheelHistoryResponse>
 
 
 

@@ -70,7 +70,7 @@ class ViewModelFactory(
             }
 
             modelClass.isAssignableFrom(BottomMenuRewardViewModel::class.java) -> {
-                BottomMenuRewardViewModel() as T
+                BottomMenuRewardViewModel(rewardsRepository) as T
             }
 
             modelClass.isAssignableFrom(BottomMenuStoreViewModel::class.java) -> {

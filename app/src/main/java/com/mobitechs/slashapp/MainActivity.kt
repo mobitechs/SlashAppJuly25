@@ -17,7 +17,6 @@ import com.mobitechs.slashapp.ui.screens.AppBottomNavigation
 import com.mobitechs.slashapp.ui.screens.AuthOtpVerificationScreen
 import com.mobitechs.slashapp.ui.screens.AuthPhoneScreen
 import com.mobitechs.slashapp.ui.screens.AuthRegisterScreen
-import com.mobitechs.slashapp.ui.screens.BottomMenuRewardScreen
 import com.mobitechs.slashapp.ui.screens.BottomMenuScanScreen
 import com.mobitechs.slashapp.ui.screens.BottomMenuStoreScreen
 import com.mobitechs.slashapp.ui.screens.BottomMenuTransactionScreen
@@ -36,7 +35,9 @@ import com.mobitechs.slashapp.ui.viewmodels.SplashViewModel
 import kotlin.collections.contains
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.WindowInsets
+import com.mobitechs.slashapp.Screen.BottomMenuRewardScreen
 import com.mobitechs.slashapp.ui.screens.AddReviewScreen
+import com.mobitechs.slashapp.ui.screens.BottomMenuRewardScreen
 import com.mobitechs.slashapp.ui.screens.StoreDetailsScreen
 import com.mobitechs.slashapp.ui.screens.TransactionDetailsScreen
 import com.mobitechs.slashapp.ui.screens.TransactionScreen
