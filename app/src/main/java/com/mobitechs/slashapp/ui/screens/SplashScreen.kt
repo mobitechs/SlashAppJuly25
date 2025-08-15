@@ -101,7 +101,7 @@ fun SplashScreen(
 
             // App name
             Text(
-                text = "Class Connect",
+                text = "Slash Discount",
                 color = Color.White,
                 fontSize = 32.sp,
                 fontWeight = FontWeight.Bold,

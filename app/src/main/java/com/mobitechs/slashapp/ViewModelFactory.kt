@@ -7,6 +7,7 @@ import com.mobitechs.slashapp.data.repository.AuthRepository
 import com.mobitechs.slashapp.data.repository.HomeRepository
 import com.mobitechs.slashapp.data.repository.QRScannerRepository
 import com.mobitechs.slashapp.data.repository.RewardsRepository
+import com.mobitechs.slashapp.data.repository.SpinWheelRepository
 import com.mobitechs.slashapp.data.repository.StoreRepository
 import com.mobitechs.slashapp.data.repository.TransactionRepository
 import com.mobitechs.slashapp.ui.viewmodels.AddReviewViewModel
@@ -17,6 +18,7 @@ import com.mobitechs.slashapp.ui.viewmodels.BottomMenuRewardViewModel
 import com.mobitechs.slashapp.ui.viewmodels.BottomMenuScanViewModel
 import com.mobitechs.slashapp.ui.viewmodels.BottomMenuStoreViewModel
 import com.mobitechs.slashapp.ui.viewmodels.BottomMenuTransactionViewModel
+import com.mobitechs.slashapp.ui.viewmodels.DailyRewardsViewModel
 import com.mobitechs.slashapp.ui.viewmodels.HomeViewModel
 import com.mobitechs.slashapp.ui.viewmodels.SplashViewModel
 import com.mobitechs.slashapp.ui.viewmodels.StoreDetailsViewModel
@@ -35,6 +37,7 @@ class ViewModelFactory(
     private val rewardsRepository: RewardsRepository,
     private val storeRepository: StoreRepository,
     private val transactionRepository: TransactionRepository,
+    private val spinWheelRepository: SpinWheelRepository,
 ) : ViewModelProvider.Factory {
 
 
@@ -91,6 +94,9 @@ class ViewModelFactory(
 
             modelClass.isAssignableFrom(TransactionDetailsViewModel::class.java) -> {
                 TransactionDetailsViewModel(transactionRepository) as T
+            }
+            modelClass.isAssignableFrom(DailyRewardsViewModel::class.java) -> {
+                DailyRewardsViewModel(spinWheelRepository) as T
             }
 
 

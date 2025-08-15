@@ -211,13 +211,13 @@ interface ApiService {
     @GET("daily-rewards/summary")
     suspend fun getDailySpinWheelSummery(): Response<SpinWheelSummeryResponse>
 
-
     @GET("daily-rewards/campaigns")
     suspend fun getDailySpinWheelCampaign(): Response<SpinWheelCampaignResponse>
 
-    @GET("daily-rewards/spin-wheel/campaignId")
-    suspend fun getDailySpinWheelCampaignDetails(campaignId: String): Response<SpinWheelCampaignDetailsResponse>
-
+    @GET("daily-rewards/spin-wheel/{campaignId}")
+    suspend fun getDailySpinWheelCampaignDetails(
+        @Path("campaignId") campaignId: String
+    ): Response<SpinWheelCampaignDetailsResponse>
 
     @POST("daily-rewards/spin-wheel/{campaignId}/spin")
     suspend fun spinWheelResult(

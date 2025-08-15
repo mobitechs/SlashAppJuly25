@@ -3,6 +3,8 @@ package com.mobitechs.slashapp
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.activity.enableEdgeToEdge
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
@@ -13,16 +15,24 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import com.mobitechs.slashapp.ui.screens.AddReviewScreen
 import com.mobitechs.slashapp.ui.screens.AppBottomNavigation
 import com.mobitechs.slashapp.ui.screens.AuthOtpVerificationScreen
 import com.mobitechs.slashapp.ui.screens.AuthPhoneScreen
 import com.mobitechs.slashapp.ui.screens.AuthRegisterScreen
+import com.mobitechs.slashapp.ui.screens.BottomMenuRewardScreen
 import com.mobitechs.slashapp.ui.screens.BottomMenuScanScreen
 import com.mobitechs.slashapp.ui.screens.BottomMenuStoreScreen
 import com.mobitechs.slashapp.ui.screens.BottomMenuTransactionScreen
+import com.mobitechs.slashapp.ui.screens.DailyRewardsScreen
 import com.mobitechs.slashapp.ui.screens.HomeScreen
+import com.mobitechs.slashapp.ui.screens.SpinWheelHistoryScreen
 import com.mobitechs.slashapp.ui.screens.SplashScreen
+import com.mobitechs.slashapp.ui.screens.StoreDetailsScreen
+import com.mobitechs.slashapp.ui.screens.TransactionDetailsScreen
+import com.mobitechs.slashapp.ui.screens.TransactionScreen
 import com.mobitechs.slashapp.ui.theme.SlashTheme
+import com.mobitechs.slashapp.ui.viewmodels.AddReviewViewModel
 import com.mobitechs.slashapp.ui.viewmodels.AuthOtpVerificationViewModel
 import com.mobitechs.slashapp.ui.viewmodels.AuthPhoneViewModel
 import com.mobitechs.slashapp.ui.viewmodels.AuthRegisterViewModel
@@ -30,18 +40,9 @@ import com.mobitechs.slashapp.ui.viewmodels.BottomMenuRewardViewModel
 import com.mobitechs.slashapp.ui.viewmodels.BottomMenuScanViewModel
 import com.mobitechs.slashapp.ui.viewmodels.BottomMenuStoreViewModel
 import com.mobitechs.slashapp.ui.viewmodels.BottomMenuTransactionViewModel
+import com.mobitechs.slashapp.ui.viewmodels.DailyRewardsViewModel
 import com.mobitechs.slashapp.ui.viewmodels.HomeViewModel
 import com.mobitechs.slashapp.ui.viewmodels.SplashViewModel
-import kotlin.collections.contains
-import androidx.activity.enableEdgeToEdge
-import androidx.compose.foundation.layout.WindowInsets
-import com.mobitechs.slashapp.Screen.BottomMenuRewardScreen
-import com.mobitechs.slashapp.ui.screens.AddReviewScreen
-import com.mobitechs.slashapp.ui.screens.BottomMenuRewardScreen
-import com.mobitechs.slashapp.ui.screens.StoreDetailsScreen
-import com.mobitechs.slashapp.ui.screens.TransactionDetailsScreen
-import com.mobitechs.slashapp.ui.screens.TransactionScreen
-import com.mobitechs.slashapp.ui.viewmodels.AddReviewViewModel
 import com.mobitechs.slashapp.ui.viewmodels.StoreDetailsViewModel
 import com.mobitechs.slashapp.ui.viewmodels.TransactionDetailsViewModel
 import com.mobitechs.slashapp.ui.viewmodels.TransactionViewModel
@@ -67,6 +68,7 @@ class MainActivity : ComponentActivity() {
             app.rewardsRepository,
             app.storeRepository,
             app.transactionRepository,
+            app.spinWheelRepository,
         )
 
         setContent {
@@ -146,7 +148,7 @@ fun AppNavigation(viewModelFactory: ViewModelFactory) {
             }
 
 
-            composable(Screen.AuthOtpVerificationScreen.route+"/{phoneNumber}/{otp}/{otpExpiry}") { backStackEntry ->
+            composable(Screen.AuthOtpVerificationScreen.route + "/{phoneNumber}/{otp}/{otpExpiry}") { backStackEntry ->
                 val phoneNumber = backStackEntry.arguments?.getString("phoneNumber") ?: ""
                 val otp = backStackEntry.arguments?.getString("otp") ?: ""
                 val otpExpiry = backStackEntry.arguments?.getString("otpExpiry") ?: ""
@@ -163,8 +165,6 @@ fun AppNavigation(viewModelFactory: ViewModelFactory) {
                     },
                 )
             }
-
-
 
 
             // Main screens
@@ -189,7 +189,8 @@ fun AppNavigation(viewModelFactory: ViewModelFactory) {
             }
 
             composable(Screen.BottomMenuTransactionScreen.route) {
-                val viewModel: BottomMenuTransactionViewModel = viewModel(factory = viewModelFactory)
+                val viewModel: BottomMenuTransactionViewModel =
+                    viewModel(factory = viewModelFactory)
                 BottomMenuTransactionScreen(
                     viewModel = viewModel,
                     navController = navController
@@ -231,7 +232,7 @@ fun AppNavigation(viewModelFactory: ViewModelFactory) {
             }
 
             // Transaction Screen
-            composable(Screen.TransactionScreen.route+"/{storeId}") { backStackEntry ->
+            composable(Screen.TransactionScreen.route + "/{storeId}") { backStackEntry ->
                 val storeId = backStackEntry.arguments?.getString("storeId")?.toIntOrNull() ?: 0
                 val viewModel: TransactionViewModel = viewModel(factory = viewModelFactory)
 
@@ -246,7 +247,7 @@ fun AppNavigation(viewModelFactory: ViewModelFactory) {
             }
 
 
-            composable(Screen.StoreDetailsScreen.route+"/{storeId}") { backStackEntry ->
+            composable(Screen.StoreDetailsScreen.route + "/{storeId}") { backStackEntry ->
                 val storeId = backStackEntry.arguments?.getString("storeId") ?: ""
                 val viewModel: StoreDetailsViewModel = viewModel(factory = viewModelFactory)
                 StoreDetailsScreen(
@@ -256,7 +257,7 @@ fun AppNavigation(viewModelFactory: ViewModelFactory) {
                 )
             }
 
-            composable(Screen.AddReviewScreen.route+"/{storeId}") { backStackEntry ->
+            composable(Screen.AddReviewScreen.route + "/{storeId}") { backStackEntry ->
                 val storeId = backStackEntry.arguments?.getString("storeId") ?: ""
                 val viewModel: AddReviewViewModel = viewModel(factory = viewModelFactory)
                 AddReviewScreen(
@@ -266,7 +267,7 @@ fun AppNavigation(viewModelFactory: ViewModelFactory) {
                 )
             }
 
-            composable(Screen.TransactionDetailsScreen.route+"/{transactionId}") { backStackEntry ->
+            composable(Screen.TransactionDetailsScreen.route + "/{transactionId}") { backStackEntry ->
                 val transactionId = backStackEntry.arguments?.getString("transactionId") ?: "0"
                 val viewModel: TransactionDetailsViewModel = viewModel(factory = viewModelFactory)
                 TransactionDetailsScreen(
@@ -276,10 +277,29 @@ fun AppNavigation(viewModelFactory: ViewModelFactory) {
                 )
             }
 
+            composable(Screen.DailyRewardsScreen.route) {
+                val viewModel: DailyRewardsViewModel = viewModel(factory = viewModelFactory)
+
+                DailyRewardsScreen(
+                    viewModel = viewModel,
+                    navController = navController,
+                    onBackClick = { navController.navigateUp() }
+                )
+            }
+
+            composable(Screen.SpinWheelHistoryScreen.route) {
+                val viewModel: DailyRewardsViewModel = viewModel(factory = viewModelFactory)
+
+                SpinWheelHistoryScreen(
+                    viewModel = viewModel,
+                    navController = navController,
+                    onBackClick = { navController.navigateUp() }
+                )
+            }
+
         }
     }
 }
-
 
 
 // Define navigation destinations
@@ -298,6 +318,8 @@ sealed class Screen(val route: String) {
     object AddReviewScreen : Screen("AddReviewScreen")
     object TransactionDetailsScreen : Screen("TransactionDetailsScreen")
 
+    object DailyRewardsScreen : Screen("DailyRewardsScreen")
+    object SpinWheelHistoryScreen : Screen("SpinWheelHistoryScreen")
 
 
 }

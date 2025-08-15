@@ -5,6 +5,7 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -30,6 +31,7 @@ import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.ripple.rememberRipple
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -92,7 +94,10 @@ fun HomeScreen(
     // Static data for daily rewards (keeping this static as it's not part of the API)
     val dailyRewards = remember {
         listOf(
-            DailyReward("Spin and Win","Play and win daily rewards", R.drawable.spin_win, Color(0xFFE91E63)),
+            DailyReward("Spin and Win","Play and win daily rewards", R.drawable.spin_win, Color(0xFFE91E63),"Rewards"),
+//            DailyReward("Survey","Take the survey and answer questions to win the rewards", R.drawable.survey, Color(
+//                0xFF2196F3
+//            ),"Survey"),
         )
     }
 
@@ -159,7 +164,11 @@ fun HomeScreen(
                 // Daily Rewards Section with full width
                 DailyRewardsSection(
                     rewards = dailyRewards,
-                    modifier = Modifier // Remove start padding for full width
+                    modifier = Modifier, // Remove start padding for full width
+                    onDailyRewardCardClick = {
+                        navController.navigate(Screen.DailyRewardsScreen.route)
+                    },
+
                 )
             }
 
@@ -405,9 +414,15 @@ private fun ToggleButton(
 @Composable
 private fun DailyRewardsSection(
     rewards: List<DailyReward>,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    onDailyRewardCardClick: () -> Unit,
 ) {
-    Column(modifier = modifier) {
+    Column(
+        modifier = modifier
+            .clickable {
+                onDailyRewardCardClick()
+            }
+    ) {
         Text(
             text = "Daily Rewards",
             fontSize = 18.sp,
@@ -438,8 +453,7 @@ private fun DailyRewardCard(
 ) {
     Card(
         modifier = modifier
-            .height(100.dp)
-            .clickable { },
+            .height(100.dp),
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(containerColor = Color.White),
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
@@ -1013,5 +1027,6 @@ data class DailyReward(
     val title: String,
     val description: String,
     val iconRes: Int,
-    val color: Color
+    val color: Color,
+    val type: String,
 )
